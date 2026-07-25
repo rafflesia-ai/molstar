@@ -1,0 +1,45 @@
+{
+  "contract": "molstar-diagnose-bundle",
+  "stable": {
+    "files_len": 9,
+    "fully_replayable": false,
+    "ok": true,
+    "redact_inputs": true,
+    "redact_paths": true,
+    "replayable": false
+  },
+  "shape": {
+    "files": [
+      "<string>",
+      "<string>",
+      "<string>",
+      "<string>",
+      "<string>",
+      "<string>",
+      "<string>",
+      "<string>",
+      "<string>"
+    ],
+    "fully_replayable": "<bool>",
+    "ok": "<bool>",
+    "output": "<string>",
+    "redactions": {
+      "env": "<bool>",
+      "inputs": "<bool>",
+      "paths": "<bool>"
+    },
+    "replay": {
+      "fully_replayable": "<bool>",
+      "includes_inputs": "<bool>",
+      "missing_inputs": [
+        "<string>"
+      ],
+      "replayable": "<bool>",
+      "warnings": [
+        "<string>"
+      ]
+    },
+    "replayable": "<bool>",
+    "run_id": "<string>"
+  }
+}

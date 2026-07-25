@@ -1,0 +1,93 @@
+version: 2
+
+project_name: molstar
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: molstar
+    main: ./cmd/molstar
+    binary: molstar
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/sacha-ichbiah/molstar/internal/cli.buildVersion={{ .Version }}
+      - -X github.com/sacha-ichbiah/molstar/internal/cli.buildCommit={{ .Commit }}
+      - -X github.com/sacha-ichbiah/molstar/internal/cli.buildDate={{ .Date }}
+
+archives:
+  - id: cli-archives
+    ids:
+      - molstar
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
+    format_overrides:
+      - goos: darwin
+        formats:
+          - zip
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - .npmrc
+      - completions/**/*
+      - docs/**/*
+      - examples/**/*
+      - package-lock.json
+      - package.json
+      - python/**/*
+      - schema/**/*
+      - scripts/**/*
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+homebrew_casks:
+  - name: molstar
+    repository:
+      owner: sacha-ichbiah
+      name: homebrew-tap
+    directory: Casks
+    homepage: https://github.com/sacha-ichbiah/molstar
+    description: Headless Mol* renderer CLI for agents
+    ids:
+      - cli-archives
+    binaries:
+      - molstar
+
+dockers_v2:
+  - images:
+      - ghcr.io/sacha-ichbiah/molstar
+    tags:
+      - "{{ .Version }}"
+      - latest
+    dockerfile: Dockerfile
+    platforms:
+      - linux/amd64
+    flags:
+      - "--platform=linux/amd64"

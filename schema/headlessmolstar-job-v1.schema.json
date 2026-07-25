@@ -1,0 +1,414 @@
+{
+  "$comment": "HeadlessMolstar job schema v1 is append-only within version:1. Unknown fields are rejected by schema validation. Breaking changes require version:2.",
+  "$defs": {
+    "asset": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "path"
+      ],
+      "type": "object"
+    },
+    "camera": {
+      "additionalProperties": false,
+      "properties": {
+        "direction": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "focus": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "near": {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "position": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "target": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "up": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "view": {
+          "enum": [
+            "front",
+            "back",
+            "top",
+            "bottom",
+            "left",
+            "right"
+          ],
+          "type": "string"
+        },
+        "zoom": {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "canvas": {
+      "additionalProperties": false,
+      "properties": {
+        "background": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "component": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "representation": {
+          "$ref": "#/$defs/representation"
+        },
+        "select": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "tooltip": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "select"
+      ],
+      "type": "object"
+    },
+    "input": {
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "id"
+          ]
+        },
+        {
+          "required": [
+            "path"
+          ]
+        },
+        {
+          "required": [
+            "url"
+          ]
+        }
+      ],
+      "properties": {
+        "assembly": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "format": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "pdbe",
+            "rcsb",
+            "alphafold",
+            "afdb"
+          ],
+          "type": "string"
+        },
+        "url": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "output": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "quality": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "type": "string"
+        },
+        "size": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "transparent": {
+          "type": "boolean"
+        },
+        "type": {
+          "enum": [
+            "image",
+            "png",
+            "jpg",
+            "jpeg",
+            "video",
+            "mp4",
+            "mvsj",
+            "mvsx",
+            "molj",
+            "state"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "path"
+      ],
+      "type": "object"
+    },
+    "representation": {
+      "additionalProperties": false,
+      "properties": {
+        "color": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "ignore_hydrogens": {
+          "type": "boolean"
+        },
+        "size_factor": {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "type": {
+          "enum": [
+            "cartoon",
+            "ball-and-stick",
+            "ball_and_stick",
+            "spacefill",
+            "line",
+            "surface",
+            "backbone"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "runtime": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_hosts": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "allow_paths": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "cache": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "max_archive_bytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_atoms": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_download_bytes": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_outputs": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_pixels": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "network": {
+          "type": "boolean"
+        },
+        "offline": {
+          "type": "boolean"
+        },
+        "profile": {
+          "enum": [
+            "default",
+            "ci",
+            "locked"
+          ],
+          "type": "string"
+        },
+        "strict": {
+          "type": "boolean"
+        },
+        "timeout_seconds": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "scene": {
+      "additionalProperties": false,
+      "properties": {
+        "camera": {
+          "$ref": "#/$defs/camera"
+        },
+        "canvas": {
+          "$ref": "#/$defs/canvas"
+        },
+        "structures": {
+          "items": {
+            "$ref": "#/$defs/structure"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "structures"
+      ],
+      "type": "object"
+    },
+    "structure": {
+      "additionalProperties": false,
+      "properties": {
+        "assembly": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "components": {
+          "items": {
+            "$ref": "#/$defs/component"
+          },
+          "type": "array"
+        },
+        "ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "source": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "model",
+            "assembly",
+            "symmetry",
+            "symmetry_mates"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://headlessmolstar.local/schema/job-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assets": {
+      "items": {
+        "$ref": "#/$defs/asset"
+      },
+      "type": "array"
+    },
+    "inputs": {
+      "additionalProperties": {
+        "$ref": "#/$defs/input"
+      },
+      "minProperties": 1,
+      "type": "object"
+    },
+    "outputs": {
+      "items": {
+        "$ref": "#/$defs/output"
+      },
+      "type": "array"
+    },
+    "runtime": {
+      "$ref": "#/$defs/runtime"
+    },
+    "scene": {
+      "$ref": "#/$defs/scene"
+    },
+    "version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "version",
+    "inputs",
+    "scene"
+  ],
+  "title": "Headless Molstar Job",
+  "type": "object"
+}

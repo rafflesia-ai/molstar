@@ -1,0 +1,20 @@
+version: 1
+kind: recipe
+name: ligand surface render
+preset: surface
+input:
+  id: 1cbs
+  provider: pdbe
+runtime:
+  profile: ci
+  cache: .molstar-cache
+  strict: true
+background: white
+focus: ligand
+view: front
+zoom: 1.15
+size: [1200, 900]
+outputs:
+  - type: image
+    path: outputs/1cbs-surface.png
+    size: [1200, 900]

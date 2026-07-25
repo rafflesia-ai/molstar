@@ -1,0 +1,74 @@
+{
+  "contract": "molstar-job-examples-show",
+  "stable": {
+    "name": "ligand",
+    "ok": true,
+    "version": 1
+  },
+  "shape": {
+    "job": {
+      "inputs": {
+        "input": {
+          "id": "<string>",
+          "provider": "<string>"
+        }
+      },
+      "outputs": [
+        {
+          "path": "<string>",
+          "size": [
+            "<number>",
+            "<number>"
+          ],
+          "type": "<string>"
+        },
+        {
+          "path": "<string>",
+          "type": "<string>"
+        }
+      ],
+      "runtime": {
+        "cache": "<string>",
+        "profile": "<string>",
+        "strict": "<bool>"
+      },
+      "scene": {
+        "camera": {
+          "focus": "<string>",
+          "view": "<string>",
+          "zoom": "<number>"
+        },
+        "canvas": {
+          "background": "<string>"
+        },
+        "structures": [
+          {
+            "components": [
+              {
+                "ref": "<string>",
+                "representation": {
+                  "color": "<string>",
+                  "type": "<string>"
+                },
+                "select": "<string>"
+              },
+              {
+                "ref": "<string>",
+                "representation": {
+                  "color": "<string>",
+                  "type": "<string>"
+                },
+                "select": "<string>"
+              }
+            ],
+            "ref": "<string>",
+            "source": "<string>"
+          }
+        ]
+      },
+      "version": "<number>"
+    },
+    "name": "<string>",
+    "ok": "<bool>"
+  }
+}

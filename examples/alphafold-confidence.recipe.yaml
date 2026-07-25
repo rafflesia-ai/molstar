@@ -1,0 +1,20 @@
+version: 1
+kind: recipe
+name: alphafold confidence render
+preset: confidence
+input:
+  id: P05067
+  provider: alphafold
+runtime:
+  profile: ci
+  cache: .molstar-cache
+  strict: true
+background: white
+focus: polymer
+view: front
+zoom: 1.1
+size: [1200, 900]
+outputs:
+  - type: image
+    path: outputs/P05067-confidence.png
+    size: [1200, 900]

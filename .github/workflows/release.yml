@@ -1,0 +1,107 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  artifact-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22.x"
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install verification libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            g++ \
+            libcairo2-dev \
+            libegl1 \
+            libgif-dev \
+            libgl1-mesa-dev \
+            libglew-dev \
+            libglu1-mesa-dev \
+            libjpeg-dev \
+            libpango1.0-dev \
+            librsvg2-dev \
+            libxi-dev \
+            make \
+            pkg-config \
+            python3
+      - run: npm ci
+      - run: ./scripts/verify-release.sh --skip-docker
+
+  goreleaser:
+    needs: artifact-smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22.x"
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install verification libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            g++ \
+            libcairo2-dev \
+            libegl1 \
+            libgif-dev \
+            libgl1-mesa-dev \
+            libglew-dev \
+            libglu1-mesa-dev \
+            libjpeg-dev \
+            libpango1.0-dev \
+            librsvg2-dev \
+            libxi-dev \
+            make \
+            pkg-config \
+            python3
+      - run: npm ci
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: check
+      - run: ./scripts/verify-release.sh --skip-docker
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,16 @@
+{
+  "contract": "molstar-job-examples-list",
+  "stable": {
+    "examples_len": 3,
+    "first_name": "default",
+    "ok": true
+  },
+  "shape": {
+    "examples": [
+      "<string>",
+      "<string>",
+      "<string>"
+    ],
+    "ok": "<bool>"
+  }
+}

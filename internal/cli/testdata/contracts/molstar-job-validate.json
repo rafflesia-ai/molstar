@@ -1,0 +1,12 @@
+{
+  "contract": "molstar-job-validate",
+  "stable": {
+    "ok": true,
+    "schema": true
+  },
+  "shape": {
+    "file": "<string>",
+    "ok": "<bool>",
+    "schema": "<bool>"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "runtime": {
+    "profile": "locked",
+    "allow_paths": ["${FIXTURE_DIR}"]
+  },
+  "inputs": {
+    "input": {
+      "path": "${FIXTURE_DIR}/one.cif",
+      "format": "mmcif"
+    }
+  },
+  "scene": {
+    "canvas": {
+      "background": "white"
+    },
+    "structures": [
+      {
+        "ref": "model",
+        "source": "input",
+        "components": [
+          {
+            "ref": "chain_a",
+            "select": "chain:A",
+            "representation": {
+              "type": "cartoon",
+              "color": "chain"
+            }
+          },
+          {
+            "ref": "carbon",
+            "select": "element:C",
+            "representation": {
+              "type": "ball-and-stick",
+              "color": "element"
+            }
+          }
+        ]
+      }
+    ],
+    "camera": {
+      "focus": "chain_a",
+      "zoom": 1.1
+    }
+  },
+  "outputs": [
+    {
+      "type": "image",
+      "path": "${FIXTURE_DIR}/selector.png",
+      "size": [80, 64]
+    }
+  ]
+}

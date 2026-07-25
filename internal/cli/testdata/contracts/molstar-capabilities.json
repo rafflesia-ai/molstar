@@ -1,0 +1,137 @@
+{
+  "contract": "molstar-capabilities",
+  "stable": {
+    "matrix_len": 4,
+    "matrix_primary": "primary",
+    "ok": true,
+    "primary_kind": "owned-renderer",
+    "primary_supports_capabilities": true,
+    "worker_supported": true
+  },
+  "shape": {
+    "config": {
+      "home": "<string>",
+      "loaded": "<bool>",
+      "path": "<string>"
+    },
+    "matrix": [
+      {
+        "available": "<bool>",
+        "canvas": "<string>",
+        "command": [
+          "<command>"
+        ],
+        "kind": "<string>",
+        "ok": "<bool>",
+        "supports_capabilities": "<bool>",
+        "supports_worker": "<bool>",
+        "target": "<string>",
+        "webgl": "<string>"
+      },
+      {
+        "available": "<bool>",
+        "command": [
+          "<command>"
+        ],
+        "kind": "<string>",
+        "ok": "<bool>",
+        "target": "<string>"
+      },
+      {
+        "available": "<bool>",
+        "command": [
+          "<command>"
+        ],
+        "kind": "<string>",
+        "ok": "<bool>",
+        "target": "<string>"
+      },
+      {
+        "available": "<bool>",
+        "command": [
+          "<command>"
+        ],
+        "kind": "<string>",
+        "ok": "<bool>",
+        "supports_worker": "<bool>",
+        "target": "<string>"
+      }
+    ],
+    "ok": "<bool>",
+    "renderer": {
+      "fallback": {
+        "available": "<bool>",
+        "command": [
+          "<command>"
+        ],
+        "kind": "<string>",
+        "supports_capabilities": "<bool>"
+      },
+      "primary": {
+        "available": "<bool>",
+        "capabilities": {
+          "command": {
+            "command": [
+              "<command>"
+            ],
+            "skipped": "<bool>",
+            "started_at": "<string>",
+            "stdout": "<string>"
+          },
+          "ok": "<bool>",
+          "renderer": {
+            "arch": "<string>",
+            "canvas": {
+              "available": "<bool>"
+            },
+            "gl": {
+              "available": "<bool>"
+            },
+            "modules": {
+              "canvas": "<bool>",
+              "gl": "<bool>",
+              "jpegjs": "<bool>",
+              "mp4": "<bool>",
+              "mvs": "<bool>",
+              "pngjs": "<bool>"
+            },
+            "molstar": "<string>",
+            "node": "<string>",
+            "ok": "<bool>",
+            "pid": "<number>",
+            "platform": "<string>",
+            "protocol": "<string>"
+          },
+          "started_at": "<string>"
+        },
+        "command": [
+          "<command>"
+        ],
+        "kind": "<string>",
+        "supports_capabilities": "<bool>"
+      },
+      "validate": {
+        "available": "<bool>",
+        "command": [
+          "<command>"
+        ],
+        "kind": "<string>",
+        "supports_capabilities": "<bool>"
+      }
+    },
+    "runtime": {
+      "executable": "<string>",
+      "goarch": "<string>",
+      "goos": "<string>",
+      "molstar": "<string>",
+      "node": "<string>"
+    },
+    "worker": {
+      "command": [
+        "<command>"
+      ],
+      "probed": "<bool>",
+      "supported": "<bool>"
+    }
+  }
+}

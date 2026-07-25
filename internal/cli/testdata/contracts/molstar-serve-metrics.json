@@ -1,0 +1,74 @@
+{
+  "contract": "molstar-serve-metrics",
+  "stable": {
+    "failed": 0,
+    "ok": true,
+    "queue_wait_buckets": 14,
+    "queue_wait_count": 1,
+    "render_count": 1,
+    "submitted": 1,
+    "succeeded": 1
+  },
+  "shape": {
+    "active_jobs": "<number>",
+    "canceled": "<number>",
+    "failed": "<number>",
+    "failures_by_error_code": {},
+    "finished": "<number>",
+    "ok": "<bool>",
+    "queue_capacity": "<number>",
+    "queue_wait_ms": {
+      "avg": "<number>",
+      "buckets": {
+        "+Inf": "<number>",
+        "1": "<number>",
+        "10": "<number>",
+        "100": "<number>",
+        "1000": "<number>",
+        "10000": "<number>",
+        "25": "<number>",
+        "250": "<number>",
+        "2500": "<number>",
+        "30000": "<number>",
+        "5": "<number>",
+        "50": "<number>",
+        "500": "<number>",
+        "5000": "<number>"
+      },
+      "count": "<number>",
+      "max": "<number>",
+      "sum": "<number>"
+    },
+    "queued_jobs": "<number>",
+    "rejected": "<number>",
+    "render_duration_ms": {
+      "avg": "<number>",
+      "buckets": {
+        "+Inf": "<number>",
+        "1": "<number>",
+        "10": "<number>",
+        "100": "<number>",
+        "1000": "<number>",
+        "10000": "<number>",
+        "25": "<number>",
+        "250": "<number>",
+        "2500": "<number>",
+        "30000": "<number>",
+        "5": "<number>",
+        "50": "<number>",
+        "500": "<number>",
+        "5000": "<number>"
+      },
+      "count": "<number>",
+      "max": "<number>",
+      "sum": "<number>"
+    },
+    "started": "<number>",
+    "started_at": "<string>",
+    "submitted": "<number>",
+    "succeeded": "<number>",
+    "uptime_ms": "<number>",
+    "worker_capacity": "<number>",
+    "worker_fallbacks": "<number>"
+  }
+}

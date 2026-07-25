@@ -1,0 +1,37 @@
+version: 1
+runtime:
+  cache: .molstar-cache
+  network: true
+  strict: true
+inputs:
+  protein:
+    id: 1cbs
+    provider: pdbe
+    assembly: "1"
+scene:
+  canvas:
+    background: white
+  structures:
+    - ref: protein
+      source: protein
+      components:
+        - ref: polymer
+          select: polymer
+          representation:
+            type: cartoon
+            color: chain
+        - ref: ligand
+          select: ligand
+          representation:
+            type: ball-and-stick
+            color: "#cc3399"
+  camera:
+    focus: ligand
+    view: front
+    zoom: 1.2
+outputs:
+  - type: image
+    path: outputs/1cbs.png
+    size: [1600, 1200]
+  - type: mvsj
+    path: outputs/1cbs.mvsj

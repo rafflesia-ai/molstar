@@ -1,0 +1,48 @@
+{
+  "contract": "molstar-serve-smoke",
+  "stable": {
+    "checks_len": 6,
+    "health_ok": true,
+    "metrics_ok": true,
+    "ok": true,
+    "ready_ok": true,
+    "rpc_check_ok": true
+  },
+  "shape": {
+    "checks": [
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "status": "<number>"
+      },
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "status": "<number>"
+      },
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "status": "<number>"
+      },
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "status": "<number>"
+      },
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "status": "<number>"
+      },
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "status": "<number>"
+      }
+    ],
+    "ok": "<bool>",
+    "socket": "<string>",
+    "url": "<string>"
+  }
+}

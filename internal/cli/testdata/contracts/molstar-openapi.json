@@ -1,0 +1,1251 @@
+{
+  "contract": "molstar-openapi",
+  "stable": {
+    "has_python_render_example": true,
+    "has_render_path": true,
+    "has_rpc_path": true,
+    "openapi": "3.1.0",
+    "render_code_samples_len": 3
+  },
+  "shape": {
+    "components": {
+      "examples": {
+        "AsyncRenderResponse": {
+          "summary": "<string>",
+          "value": {
+            "events": [
+              {
+                "message": "<string>",
+                "phase": "<string>"
+              }
+            ],
+            "id": "<string>",
+            "status": "<string>"
+          }
+        },
+        "CurlRender": {
+          "summary": "<string>",
+          "value": "<string>"
+        },
+        "JSONRPCMetricsRequest": {
+          "summary": "<string>",
+          "value": {
+            "id": "<number>",
+            "jsonrpc": "<string>",
+            "method": "<string>"
+          }
+        },
+        "NodeRender": {
+          "summary": "<string>",
+          "value": "<string>"
+        },
+        "PythonRender": {
+          "summary": "<string>",
+          "value": "<string>"
+        },
+        "RenderJob": {
+          "summary": "<string>",
+          "value": {
+            "inputs": {
+              "protein": {
+                "id": "<string>",
+                "provider": "<string>"
+              }
+            },
+            "outputs": [
+              {
+                "path": "<string>",
+                "size": [
+                  "<number>",
+                  "<number>"
+                ],
+                "type": "<string>"
+              }
+            ],
+            "scene": {
+              "camera": {
+                "focus": "<string>"
+              },
+              "canvas": {
+                "background": "<string>"
+              },
+              "structures": [
+                {
+                  "components": [
+                    {
+                      "ref": "<string>",
+                      "representation": {
+                        "color": "<string>",
+                        "type": "<string>"
+                      },
+                      "select": "<string>"
+                    },
+                    {
+                      "ref": "<string>",
+                      "representation": {
+                        "color": "<string>",
+                        "type": "<string>"
+                      },
+                      "select": "<string>"
+                    }
+                  ],
+                  "source": "<string>"
+                }
+              ]
+            },
+            "version": "<number>"
+          }
+        }
+      },
+      "schemas": {
+        "AnyObject": {
+          "additionalProperties": "<bool>",
+          "type": "<string>"
+        },
+        "Error": {
+          "properties": {
+            "error": {
+              "properties": {
+                "code": {
+                  "type": "<string>"
+                },
+                "diagnosis": {
+                  "items": {
+                    "type": "<string>"
+                  },
+                  "type": "<string>"
+                },
+                "message": {
+                  "type": "<string>"
+                }
+              },
+              "type": "<string>"
+            },
+            "ok": {
+              "type": "<string>"
+            },
+            "timestamp": {
+              "format": "<string>",
+              "type": "<string>"
+            }
+          },
+          "type": "<string>"
+        },
+        "Job": {
+          "$comment": "<string>",
+          "$defs": {
+            "asset": {
+              "additionalProperties": "<bool>",
+              "properties": {
+                "name": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "path": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                }
+              },
+              "required": [
+                "<string>",
+                "<string>"
+              ],
+              "type": "<string>"
+            },
+            "camera": {
+              "additionalProperties": "<bool>",
+              "properties": {
+                "direction": {
+                  "items": {
+                    "type": "<string>"
+                  },
+                  "maxItems": "<number>",
+                  "minItems": "<number>",
+                  "type": "<string>"
+                },
+                "focus": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "near": {
+                  "exclusiveMinimum": "<number>",
+                  "type": "<string>"
+                },
+                "position": {
+                  "items": {
+                    "type": "<string>"
+                  },
+                  "maxItems": "<number>",
+                  "minItems": "<number>",
+                  "type": "<string>"
+                },
+                "target": {
+                  "items": {
+                    "type": "<string>"
+                  },
+                  "maxItems": "<number>",
+                  "minItems": "<number>",
+                  "type": "<string>"
+                },
+                "up": {
+                  "items": {
+                    "type": "<string>"
+                  },
+                  "maxItems": "<number>",
+                  "minItems": "<number>",
+                  "type": "<string>"
+                },
+                "view": {
+                  "enum": [
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>"
+                  ],
+                  "type": "<string>"
+                },
+                "zoom": {
+                  "exclusiveMinimum": "<number>",
+                  "type": "<string>"
+                }
+              },
+              "type": "<string>"
+            },
+            "canvas": {
+              "additionalProperties": "<bool>",
+              "properties": {
+                "background": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                }
+              },
+              "type": "<string>"
+            },
+            "component": {
+              "additionalProperties": "<bool>",
+              "properties": {
+                "label": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "ref": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "representation": {
+                  "$ref": "<string>"
+                },
+                "select": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "tooltip": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                }
+              },
+              "required": [
+                "<string>"
+              ],
+              "type": "<string>"
+            },
+            "input": {
+              "additionalProperties": "<bool>",
+              "oneOf": [
+                {
+                  "required": [
+                    "<string>"
+                  ]
+                },
+                {
+                  "required": [
+                    "<string>"
+                  ]
+                },
+                {
+                  "required": [
+                    "<string>"
+                  ]
+                }
+              ],
+              "properties": {
+                "assembly": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "format": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "id": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "path": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "provider": {
+                  "enum": [
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>"
+                  ],
+                  "type": "<string>"
+                },
+                "url": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                }
+              },
+              "type": "<string>"
+            },
+            "output": {
+              "additionalProperties": "<bool>",
+              "properties": {
+                "path": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "quality": {
+                  "enum": [
+                    "<string>",
+                    "<string>",
+                    "<string>"
+                  ],
+                  "type": "<string>"
+                },
+                "size": {
+                  "items": {
+                    "minimum": "<number>",
+                    "type": "<string>"
+                  },
+                  "maxItems": "<number>",
+                  "minItems": "<number>",
+                  "type": "<string>"
+                },
+                "transparent": {
+                  "type": "<string>"
+                },
+                "type": {
+                  "enum": [
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>"
+                  ],
+                  "type": "<string>"
+                }
+              },
+              "required": [
+                "<string>",
+                "<string>"
+              ],
+              "type": "<string>"
+            },
+            "representation": {
+              "additionalProperties": "<bool>",
+              "properties": {
+                "color": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "ignore_hydrogens": {
+                  "type": "<string>"
+                },
+                "size_factor": {
+                  "exclusiveMinimum": "<number>",
+                  "type": "<string>"
+                },
+                "type": {
+                  "enum": [
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>"
+                  ],
+                  "type": "<string>"
+                }
+              },
+              "type": "<string>"
+            },
+            "runtime": {
+              "additionalProperties": "<bool>",
+              "properties": {
+                "allow_hosts": {
+                  "items": {
+                    "minLength": "<number>",
+                    "type": "<string>"
+                  },
+                  "type": "<string>"
+                },
+                "allow_paths": {
+                  "items": {
+                    "minLength": "<number>",
+                    "type": "<string>"
+                  },
+                  "type": "<string>"
+                },
+                "cache": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "max_archive_bytes": {
+                  "minimum": "<number>",
+                  "type": "<string>"
+                },
+                "max_atoms": {
+                  "minimum": "<number>",
+                  "type": "<string>"
+                },
+                "max_download_bytes": {
+                  "minimum": "<number>",
+                  "type": "<string>"
+                },
+                "max_outputs": {
+                  "minimum": "<number>",
+                  "type": "<string>"
+                },
+                "max_pixels": {
+                  "minimum": "<number>",
+                  "type": "<string>"
+                },
+                "network": {
+                  "type": "<string>"
+                },
+                "offline": {
+                  "type": "<string>"
+                },
+                "profile": {
+                  "enum": [
+                    "<string>",
+                    "<string>",
+                    "<string>"
+                  ],
+                  "type": "<string>"
+                },
+                "strict": {
+                  "type": "<string>"
+                },
+                "timeout_seconds": {
+                  "minimum": "<number>",
+                  "type": "<string>"
+                }
+              },
+              "type": "<string>"
+            },
+            "scene": {
+              "additionalProperties": "<bool>",
+              "properties": {
+                "camera": {
+                  "$ref": "<string>"
+                },
+                "canvas": {
+                  "$ref": "<string>"
+                },
+                "structures": {
+                  "items": {
+                    "$ref": "<string>"
+                  },
+                  "type": "<string>"
+                }
+              },
+              "required": [
+                "<string>"
+              ],
+              "type": "<string>"
+            },
+            "structure": {
+              "additionalProperties": "<bool>",
+              "properties": {
+                "assembly": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "components": {
+                  "items": {
+                    "$ref": "<string>"
+                  },
+                  "type": "<string>"
+                },
+                "ref": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "source": {
+                  "minLength": "<number>",
+                  "type": "<string>"
+                },
+                "type": {
+                  "enum": [
+                    "<string>",
+                    "<string>",
+                    "<string>",
+                    "<string>"
+                  ],
+                  "type": "<string>"
+                }
+              },
+              "required": [
+                "<string>"
+              ],
+              "type": "<string>"
+            }
+          },
+          "$id": "<string>",
+          "$schema": "<string>",
+          "additionalProperties": "<bool>",
+          "properties": {
+            "assets": {
+              "items": {
+                "$ref": "<string>"
+              },
+              "type": "<string>"
+            },
+            "inputs": {
+              "additionalProperties": {
+                "$ref": "<string>"
+              },
+              "minProperties": "<number>",
+              "type": "<string>"
+            },
+            "outputs": {
+              "items": {
+                "$ref": "<string>"
+              },
+              "type": "<string>"
+            },
+            "runtime": {
+              "$ref": "<string>"
+            },
+            "scene": {
+              "$ref": "<string>"
+            },
+            "version": {
+              "const": "<number>"
+            }
+          },
+          "required": [
+            "<string>",
+            "<string>",
+            "<string>"
+          ],
+          "title": "<string>",
+          "type": "<string>"
+        }
+      },
+      "securitySchemes": {
+        "bearerAuth": {
+          "scheme": "<string>",
+          "type": "<string>"
+        }
+      }
+    },
+    "info": {
+      "description": "<string>",
+      "title": "<string>",
+      "version": "<string>"
+    },
+    "openapi": "<string>",
+    "paths": {
+      "/capabilities": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/explain": {
+        "post": {
+          "description": "<string>",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "<string>"
+                }
+              }
+            },
+            "required": "<bool>"
+          },
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "400": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "properties": {
+                      "error": {
+                        "properties": {
+                          "code": {
+                            "type": "<string>"
+                          },
+                          "diagnosis": {
+                            "items": {
+                              "type": "<string>"
+                            },
+                            "type": "<string>"
+                          },
+                          "message": {
+                            "type": "<string>"
+                          }
+                        },
+                        "type": "<string>"
+                      },
+                      "ok": {
+                        "type": "<string>"
+                      },
+                      "timestamp": {
+                        "format": "<string>",
+                        "type": "<string>"
+                      }
+                    },
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/health": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/jobs/{id}": {
+        "delete": {
+          "description": "<string>",
+          "responses": {
+            "202": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "404": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "properties": {
+                      "error": {
+                        "properties": {
+                          "code": {
+                            "type": "<string>"
+                          },
+                          "diagnosis": {
+                            "items": {
+                              "type": "<string>"
+                            },
+                            "type": "<string>"
+                          },
+                          "message": {
+                            "type": "<string>"
+                          }
+                        },
+                        "type": "<string>"
+                      },
+                      "ok": {
+                        "type": "<string>"
+                      },
+                      "timestamp": {
+                        "format": "<string>",
+                        "type": "<string>"
+                      }
+                    },
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        },
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "404": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "properties": {
+                      "error": {
+                        "properties": {
+                          "code": {
+                            "type": "<string>"
+                          },
+                          "diagnosis": {
+                            "items": {
+                              "type": "<string>"
+                            },
+                            "type": "<string>"
+                          },
+                          "message": {
+                            "type": "<string>"
+                          }
+                        },
+                        "type": "<string>"
+                      },
+                      "ok": {
+                        "type": "<string>"
+                      },
+                      "timestamp": {
+                        "format": "<string>",
+                        "type": "<string>"
+                      }
+                    },
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/jobs/{id}/events": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "contentMediaType": "<string>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "404": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "properties": {
+                      "error": {
+                        "properties": {
+                          "code": {
+                            "type": "<string>"
+                          },
+                          "diagnosis": {
+                            "items": {
+                              "type": "<string>"
+                            },
+                            "type": "<string>"
+                          },
+                          "message": {
+                            "type": "<string>"
+                          }
+                        },
+                        "type": "<string>"
+                      },
+                      "ok": {
+                        "type": "<string>"
+                      },
+                      "timestamp": {
+                        "format": "<string>",
+                        "type": "<string>"
+                      }
+                    },
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/jobs/{id}/outputs": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "404": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "properties": {
+                      "error": {
+                        "properties": {
+                          "code": {
+                            "type": "<string>"
+                          },
+                          "diagnosis": {
+                            "items": {
+                              "type": "<string>"
+                            },
+                            "type": "<string>"
+                          },
+                          "message": {
+                            "type": "<string>"
+                          }
+                        },
+                        "type": "<string>"
+                      },
+                      "ok": {
+                        "type": "<string>"
+                      },
+                      "timestamp": {
+                        "format": "<string>",
+                        "type": "<string>"
+                      }
+                    },
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/jobs/{id}/outputs/{index}": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "contentEncoding": "<string>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "404": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "properties": {
+                      "error": {
+                        "properties": {
+                          "code": {
+                            "type": "<string>"
+                          },
+                          "diagnosis": {
+                            "items": {
+                              "type": "<string>"
+                            },
+                            "type": "<string>"
+                          },
+                          "message": {
+                            "type": "<string>"
+                          }
+                        },
+                        "type": "<string>"
+                      },
+                      "ok": {
+                        "type": "<string>"
+                      },
+                      "timestamp": {
+                        "format": "<string>",
+                        "type": "<string>"
+                      }
+                    },
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/metrics": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/metrics/prometheus": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/ready": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "503": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/render": {
+        "post": {
+          "description": "<string>",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "<string>"
+                }
+              }
+            },
+            "required": "<bool>"
+          },
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "202": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "429": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "properties": {
+                      "error": {
+                        "properties": {
+                          "code": {
+                            "type": "<string>"
+                          },
+                          "diagnosis": {
+                            "items": {
+                              "type": "<string>"
+                            },
+                            "type": "<string>"
+                          },
+                          "message": {
+                            "type": "<string>"
+                          }
+                        },
+                        "type": "<string>"
+                      },
+                      "ok": {
+                        "type": "<string>"
+                      },
+                      "timestamp": {
+                        "format": "<string>",
+                        "type": "<string>"
+                      }
+                    },
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>",
+          "x-codeSamples": [
+            {
+              "label": "<string>",
+              "lang": "<string>",
+              "source": "<string>"
+            },
+            {
+              "label": "<string>",
+              "lang": "<string>",
+              "source": "<string>"
+            },
+            {
+              "label": "<string>",
+              "lang": "<string>",
+              "source": "<string>"
+            }
+          ]
+        }
+      },
+      "/rpc": {
+        "post": {
+          "description": "<string>",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": "<bool>",
+                  "type": "<string>"
+                }
+              }
+            },
+            "required": "<bool>"
+          },
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>",
+          "x-codeSamples": [
+            {
+              "label": "<string>",
+              "lang": "<string>",
+              "source": "<string>"
+            }
+          ]
+        }
+      },
+      "/schema": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/schema/openapi": {
+        "get": {
+          "description": "<string>",
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      },
+      "/validate": {
+        "post": {
+          "description": "<string>",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "<string>"
+                }
+              }
+            },
+            "required": "<bool>"
+          },
+          "responses": {
+            "200": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": "<bool>",
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            },
+            "400": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "properties": {
+                      "error": {
+                        "properties": {
+                          "code": {
+                            "type": "<string>"
+                          },
+                          "diagnosis": {
+                            "items": {
+                              "type": "<string>"
+                            },
+                            "type": "<string>"
+                          },
+                          "message": {
+                            "type": "<string>"
+                          }
+                        },
+                        "type": "<string>"
+                      },
+                      "ok": {
+                        "type": "<string>"
+                      },
+                      "timestamp": {
+                        "format": "<string>",
+                        "type": "<string>"
+                      }
+                    },
+                    "type": "<string>"
+                  }
+                }
+              },
+              "description": "<string>"
+            }
+          },
+          "summary": "<string>"
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ],
+    "servers": [
+      {
+        "url": "<string>"
+      }
+    ]
+  }
+}

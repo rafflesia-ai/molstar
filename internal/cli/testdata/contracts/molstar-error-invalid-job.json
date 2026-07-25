@@ -1,0 +1,26 @@
+{
+  "contract": "molstar-error-invalid-job",
+  "stable": {
+    "agent_code": "invalid_job",
+    "code": "invalid_input",
+    "command": "job validate",
+    "diagnosis_len": 0,
+    "exit_code": 2,
+    "has_timestamp": true,
+    "ok": false,
+    "retryable": false
+  },
+  "shape": {
+    "command": "<string>",
+    "error": {
+      "agent_code": "<string>",
+      "code": "<string>",
+      "diagnosis": [],
+      "exit_code": "<number>",
+      "message": "<string>",
+      "retryable": "<bool>"
+    },
+    "ok": "<bool>",
+    "timestamp": "<string>"
+  }
+}

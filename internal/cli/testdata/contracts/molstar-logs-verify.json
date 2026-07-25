@@ -1,0 +1,36 @@
+{
+  "contract": "molstar-logs-verify",
+  "stable": {
+    "files_len": 1,
+    "fully_replayable": true,
+    "ok": true,
+    "outputs_len": 1,
+    "replayable": true
+  },
+  "shape": {
+    "bundle": "<string>",
+    "expected_outputs": [
+      "<string>"
+    ],
+    "files": [
+      "<string>"
+    ],
+    "fully_replayable": "<bool>",
+    "id": "<string>",
+    "ok": "<bool>",
+    "replay": {
+      "embedded_input_bytes": "<number>",
+      "embedded_inputs": [
+        "<string>"
+      ],
+      "fully_replayable": "<bool>",
+      "includes_inputs": "<bool>",
+      "replayable": "<bool>"
+    },
+    "replayable": "<bool>",
+    "warnings": [
+      "<string>",
+      "<string>"
+    ]
+  }
+}

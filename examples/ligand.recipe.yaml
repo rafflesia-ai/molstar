@@ -1,0 +1,22 @@
+version: 1
+kind: recipe
+name: ligand render
+preset: ligand
+input:
+  id: 1cbs
+  provider: pdbe
+runtime:
+  profile: ci
+  cache: .molstar-cache
+  strict: true
+background: white
+focus: ligand
+view: front
+zoom: 1.2
+size: [1200, 900]
+outputs:
+  - type: image
+    path: outputs/1cbs-ligand.png
+    size: [1200, 900]
+  - type: mvsj
+    path: outputs/1cbs-ligand.mvsj

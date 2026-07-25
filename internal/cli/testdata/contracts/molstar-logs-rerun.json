@@ -1,0 +1,391 @@
+{
+  "contract": "molstar-logs-rerun",
+  "stable": {
+    "files_len": 1,
+    "ok": true,
+    "output_files_len": 1,
+    "rerun_ok": true
+  },
+  "shape": {
+    "bundle": "<string>",
+    "files": [
+      "<string>"
+    ],
+    "ok": "<bool>",
+    "rerun": {
+      "commands": [
+        {
+          "command": [
+            "<command>"
+          ],
+          "skipped": "<bool>",
+          "started_at": "<string>"
+        }
+      ],
+      "diagnostics": {
+        "renderer_mode": "<string>"
+      },
+      "input": "<string>",
+      "job": {
+        "inputs": {
+          "demo": {
+            "format": "<string>",
+            "path": "<string>"
+          }
+        },
+        "outputs": [
+          {
+            "path": "<string>",
+            "size": [
+              "<number>",
+              "<number>"
+            ],
+            "type": "<string>"
+          }
+        ],
+        "runtime": {
+          "strict": "<bool>"
+        },
+        "scene": {
+          "camera": {
+            "focus": "<string>"
+          },
+          "canvas": {
+            "background": "<string>"
+          },
+          "structures": [
+            {
+              "components": [
+                {
+                  "ref": "<string>",
+                  "representation": {
+                    "color": "<string>",
+                    "type": "<string>"
+                  },
+                  "select": "<string>"
+                }
+              ],
+              "ref": "<string>",
+              "source": "<string>"
+            }
+          ]
+        },
+        "version": "<number>"
+      },
+      "mvs": "<string>",
+      "mvs_document": {
+        "metadata": {
+          "title": "<string>",
+          "version": "<string>"
+        },
+        "root": {
+          "children": [
+            {
+              "children": [
+                {
+                  "children": [
+                    {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "children": [
+                                {
+                                  "kind": "<string>",
+                                  "params": {
+                                    "color": "<string>"
+                                  }
+                                }
+                              ],
+                              "kind": "<string>",
+                              "params": {
+                                "type": "<string>"
+                              }
+                            },
+                            {
+                              "kind": "<string>"
+                            }
+                          ],
+                          "kind": "<string>",
+                          "params": {
+                            "selector": "<string>"
+                          },
+                          "ref": "<string>"
+                        }
+                      ],
+                      "kind": "<string>",
+                      "params": {
+                        "type": "<string>"
+                      },
+                      "ref": "<string>"
+                    }
+                  ],
+                  "kind": "<string>",
+                  "params": {
+                    "format": "<string>"
+                  }
+                }
+              ],
+              "kind": "<string>",
+              "params": {
+                "url": "<string>"
+              }
+            },
+            {
+              "kind": "<string>",
+              "params": {
+                "background_color": "<string>"
+              }
+            },
+            {
+              "kind": "<string>"
+            }
+          ],
+          "kind": "<string>"
+        }
+      },
+      "ok": "<bool>",
+      "output_files": [
+        {
+          "atomic": "<bool>",
+          "average_hash": "<string>",
+          "bytes": "<number>",
+          "height": "<number>",
+          "non_blank": "<bool>",
+          "path": "<string>",
+          "sha256": "<string>",
+          "type": "<string>",
+          "verified": "<bool>",
+          "width": "<number>"
+        }
+      ],
+      "outputs": [
+        "<string>"
+      ],
+      "stages": [
+        {
+          "detail": "<string>",
+          "name": "<string>",
+          "ok": "<bool>",
+          "started_at": "<string>"
+        },
+        {
+          "name": "<string>",
+          "ok": "<bool>",
+          "started_at": "<string>"
+        },
+        {
+          "name": "<string>",
+          "ok": "<bool>",
+          "started_at": "<string>"
+        },
+        {
+          "detail": "<string>",
+          "name": "<string>",
+          "ok": "<bool>",
+          "started_at": "<string>"
+        }
+      ]
+    },
+    "run": {
+      "assets": [
+        {
+          "data": "<string>",
+          "format": "<string>",
+          "name": "<string>",
+          "ref": "<string>"
+        }
+      ],
+      "command": "<string>",
+      "created_at": "<string>",
+      "id": "<string>",
+      "label": "<string>",
+      "ok": "<bool>",
+      "replay": {
+        "embedded_input_bytes": "<number>",
+        "embedded_inputs": [
+          "<string>"
+        ],
+        "fully_replayable": "<bool>",
+        "includes_inputs": "<bool>",
+        "replayable": "<bool>"
+      },
+      "report": {
+        "commands": [
+          {
+            "command": [
+              "<command>"
+            ],
+            "skipped": "<bool>",
+            "started_at": "<string>"
+          }
+        ],
+        "diagnostics": {
+          "renderer_mode": "<string>"
+        },
+        "input": "<string>",
+        "job": {
+          "inputs": {
+            "demo": {
+              "format": "<string>",
+              "path": "<string>"
+            }
+          },
+          "outputs": [
+            {
+              "path": "<string>",
+              "size": [
+                "<number>",
+                "<number>"
+              ],
+              "type": "<string>"
+            }
+          ],
+          "runtime": {
+            "strict": "<bool>"
+          },
+          "scene": {
+            "camera": {
+              "focus": "<string>"
+            },
+            "canvas": {
+              "background": "<string>"
+            },
+            "structures": [
+              {
+                "components": [
+                  {
+                    "ref": "<string>",
+                    "representation": {
+                      "color": "<string>",
+                      "type": "<string>"
+                    },
+                    "select": "<string>"
+                  }
+                ],
+                "ref": "<string>",
+                "source": "<string>"
+              }
+            ]
+          },
+          "version": "<number>"
+        },
+        "mvs": "<string>",
+        "mvs_document": {
+          "metadata": {
+            "title": "<string>",
+            "version": "<string>"
+          },
+          "root": {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "kind": "<string>",
+                                    "params": {
+                                      "color": "<string>"
+                                    }
+                                  }
+                                ],
+                                "kind": "<string>",
+                                "params": {
+                                  "type": "<string>"
+                                }
+                              },
+                              {
+                                "kind": "<string>"
+                              }
+                            ],
+                            "kind": "<string>",
+                            "params": {
+                              "selector": "<string>"
+                            },
+                            "ref": "<string>"
+                          }
+                        ],
+                        "kind": "<string>",
+                        "params": {
+                          "type": "<string>"
+                        },
+                        "ref": "<string>"
+                      }
+                    ],
+                    "kind": "<string>",
+                    "params": {
+                      "format": "<string>"
+                    }
+                  }
+                ],
+                "kind": "<string>",
+                "params": {
+                  "url": "<string>"
+                }
+              },
+              {
+                "kind": "<string>",
+                "params": {
+                  "background_color": "<string>"
+                }
+              },
+              {
+                "kind": "<string>"
+              }
+            ],
+            "kind": "<string>"
+          }
+        },
+        "ok": "<bool>",
+        "output_files": [
+          {
+            "atomic": "<bool>",
+            "average_hash": "<string>",
+            "bytes": "<number>",
+            "height": "<number>",
+            "non_blank": "<bool>",
+            "path": "<string>",
+            "sha256": "<string>",
+            "type": "<string>",
+            "verified": "<bool>",
+            "width": "<number>"
+          }
+        ],
+        "outputs": [
+          "<string>"
+        ],
+        "run_label": "<string>",
+        "stages": [
+          {
+            "detail": "<string>",
+            "name": "<string>",
+            "ok": "<bool>",
+            "started_at": "<string>"
+          },
+          {
+            "name": "<string>",
+            "ok": "<bool>",
+            "started_at": "<string>"
+          },
+          {
+            "name": "<string>",
+            "ok": "<bool>",
+            "started_at": "<string>"
+          },
+          {
+            "detail": "<string>",
+            "name": "<string>",
+            "ok": "<bool>",
+            "started_at": "<string>"
+          }
+        ]
+      }
+    }
+  }
+}

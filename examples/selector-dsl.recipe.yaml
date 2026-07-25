@@ -1,0 +1,36 @@
+version: 1
+kind: recipe
+name: selector DSL render
+preset: default
+input:
+  id: 1cbs
+  provider: pdbe
+runtime:
+  profile: ci
+  cache: .molstar-cache
+  strict: true
+background: white
+focus: active_site
+view: front
+zoom: 1.4
+size: [1000, 800]
+components:
+  - ref: chain_a
+    select: chain:A
+    representation:
+      type: cartoon
+      color: chain
+  - ref: retinol
+    select: ligand:RTL
+    representation:
+      type: ball-and-stick
+      color: element
+  - ref: active_site
+    select: within:5A:ligand:RTL
+    representation:
+      type: ball-and-stick
+      color: element
+outputs:
+  - type: image
+    path: outputs/1cbs-selector-dsl.png
+    size: [1000, 800]

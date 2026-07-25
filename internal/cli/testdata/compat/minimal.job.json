@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "runtime": {
+    "profile": "locked",
+    "allow_paths": ["${FIXTURE_DIR}"]
+  },
+  "inputs": {
+    "input": {
+      "path": "${FIXTURE_DIR}/one.cif",
+      "format": "mmcif"
+    }
+  },
+  "scene": {
+    "canvas": {
+      "background": "white"
+    },
+    "structures": [
+      {
+        "ref": "model",
+        "source": "input",
+        "components": [
+          {
+            "ref": "all",
+            "select": "all",
+            "representation": {
+              "type": "spacefill",
+              "color": "#cc3399"
+            }
+          }
+        ]
+      }
+    ],
+    "camera": {
+      "focus": "all"
+    }
+  },
+  "outputs": [
+    {
+      "type": "image",
+      "path": "${FIXTURE_DIR}/minimal.png",
+      "size": [64, 64]
+    },
+    {
+      "type": "mvsj",
+      "path": "${FIXTURE_DIR}/minimal.mvsj"
+    },
+    {
+      "type": "mvsx",
+      "path": "${FIXTURE_DIR}/minimal.mvsx"
+    }
+  ]
+}

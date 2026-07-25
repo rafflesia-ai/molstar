@@ -1,0 +1,23 @@
+.DS_Store
+__pycache__/
+*.pyc
+bin
+dist
+outputs
+node_modules
+.molstar-cache
+.molstar-runs
+
+# compiled tool binaries built into repo root (reproducible via go build)
+/*-headless
+/molstar
+err.txt
+
+# APBS MC-shell I/O capture written to CWD by real APBS runs
+io.mc
+*.mc
+
+# Repo-local dogfooding/scratch working area. Per CLAUDE.md, expensive generated
+# artifacts belong under /Volumes/ExtremeSSD — never in the repo. Ignoring this
+# keeps a stray `git add -A` from sweeping throwaway fixtures/binaries/DBs in.
+scratchpad/

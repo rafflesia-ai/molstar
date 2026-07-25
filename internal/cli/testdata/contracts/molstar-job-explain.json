@@ -1,0 +1,37 @@
+{
+  "contract": "molstar-job-explain",
+  "stable": {
+    "ok": true,
+    "outputs_len": 1,
+    "schema": "job-v1",
+    "would_compile": true,
+    "would_render": true
+  },
+  "shape": {
+    "inputs": [
+      {
+        "format": "<string>",
+        "network_enabled": "<bool>",
+        "ref": "<string>",
+        "requires_network": "<bool>",
+        "url": "<string>"
+      }
+    ],
+    "mvs_nodes": "<number>",
+    "ok": "<bool>",
+    "outputs": [
+      {
+        "height": "<number>",
+        "path": "<string>",
+        "pixels": "<number>",
+        "transaction": "<bool>",
+        "type": "<string>",
+        "width": "<number>"
+      }
+    ],
+    "runtime": {},
+    "schema": "<string>",
+    "would_compile": "<bool>",
+    "would_render": "<bool>"
+  }
+}

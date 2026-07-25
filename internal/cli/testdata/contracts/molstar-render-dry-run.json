@@ -1,0 +1,176 @@
+{
+  "contract": "molstar-render-dry-run",
+  "stable": {
+    "commands_len": 1,
+    "first_skipped": true,
+    "ok": true,
+    "output_files_len": 1,
+    "outputs_len": 1
+  },
+  "shape": {
+    "commands": [
+      {
+        "command": [
+          "<command>"
+        ],
+        "skipped": "<bool>",
+        "started_at": "<string>"
+      }
+    ],
+    "diagnostics": {
+      "renderer_mode": "<string>"
+    },
+    "input": "<string>",
+    "job": {
+      "inputs": {
+        "input": {
+          "format": "<string>",
+          "path": "<string>"
+        }
+      },
+      "outputs": [
+        {
+          "path": "<string>",
+          "size": [
+            "<number>",
+            "<number>"
+          ],
+          "type": "<string>"
+        }
+      ],
+      "runtime": {},
+      "scene": {
+        "camera": {
+          "focus": "<string>"
+        },
+        "canvas": {
+          "background": "<string>"
+        },
+        "structures": [
+          {
+            "components": [
+              {
+                "ref": "<string>",
+                "representation": {
+                  "color": "<string>",
+                  "type": "<string>"
+                },
+                "select": "<string>"
+              }
+            ],
+            "source": "<string>"
+          }
+        ]
+      },
+      "version": "<number>"
+    },
+    "mvs": "<string>",
+    "mvs_document": {
+      "metadata": {
+        "title": "<string>",
+        "version": "<string>"
+      },
+      "root": {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "kind": "<string>",
+                                "params": {
+                                  "color": "<string>"
+                                }
+                              }
+                            ],
+                            "kind": "<string>",
+                            "params": {
+                              "type": "<string>"
+                            }
+                          },
+                          {
+                            "kind": "<string>"
+                          }
+                        ],
+                        "kind": "<string>",
+                        "params": {
+                          "selector": "<string>"
+                        },
+                        "ref": "<string>"
+                      }
+                    ],
+                    "kind": "<string>",
+                    "params": {
+                      "type": "<string>"
+                    }
+                  }
+                ],
+                "kind": "<string>",
+                "params": {
+                  "format": "<string>"
+                }
+              }
+            ],
+            "kind": "<string>",
+            "params": {
+              "url": "<string>"
+            }
+          },
+          {
+            "kind": "<string>",
+            "params": {
+              "background_color": "<string>"
+            }
+          },
+          {
+            "kind": "<string>"
+          }
+        ],
+        "kind": "<string>"
+      }
+    },
+    "ok": "<bool>",
+    "output_files": [
+      {
+        "path": "<string>",
+        "type": "<string>",
+        "verified": "<bool>"
+      }
+    ],
+    "outputs": [
+      "<string>"
+    ],
+    "run_id": "<string>",
+    "run_log": "<string>",
+    "stages": [
+      {
+        "detail": "<string>",
+        "name": "<string>",
+        "ok": "<bool>",
+        "started_at": "<string>"
+      },
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "started_at": "<string>"
+      },
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "started_at": "<string>"
+      },
+      {
+        "detail": "<string>",
+        "name": "<string>",
+        "ok": "<bool>",
+        "started_at": "<string>"
+      }
+    ]
+  }
+}

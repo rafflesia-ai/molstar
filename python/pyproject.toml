@@ -1,0 +1,8 @@
+[project]
+name = "headlessmolstar"
+version = "1.0.0"
+description = "Thin Python subprocess wrapper for the headlessmolstar CLI"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

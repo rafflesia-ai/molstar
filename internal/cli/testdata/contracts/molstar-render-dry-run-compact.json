@@ -1,0 +1,63 @@
+{
+  "contract": "molstar-render-dry-run-compact",
+  "stable": {
+    "commands_len": 1,
+    "first_skipped": true,
+    "ok": true,
+    "output_files_len": 1,
+    "outputs_len": 1
+  },
+  "shape": {
+    "commands": [
+      {
+        "command": [
+          "<command>"
+        ],
+        "skipped": "<bool>",
+        "started_at": "<string>"
+      }
+    ],
+    "diagnostics": {
+      "renderer_mode": "<string>"
+    },
+    "input": "<string>",
+    "mvs": "<string>",
+    "ok": "<bool>",
+    "output_files": [
+      {
+        "path": "<string>",
+        "type": "<string>",
+        "verified": "<bool>"
+      }
+    ],
+    "outputs": [
+      "<string>"
+    ],
+    "run_id": "<string>",
+    "run_log": "<string>",
+    "stages": [
+      {
+        "detail": "<string>",
+        "name": "<string>",
+        "ok": "<bool>",
+        "started_at": "<string>"
+      },
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "started_at": "<string>"
+      },
+      {
+        "name": "<string>",
+        "ok": "<bool>",
+        "started_at": "<string>"
+      },
+      {
+        "detail": "<string>",
+        "name": "<string>",
+        "ok": "<bool>",
+        "started_at": "<string>"
+      }
+    ]
+  }
+}

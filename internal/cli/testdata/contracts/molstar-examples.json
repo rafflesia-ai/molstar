@@ -1,0 +1,133 @@
+{
+  "contract": "molstar-examples",
+  "stable": {
+    "examples_len": 13,
+    "first_name": "demo",
+    "first_output": "molstar-demo.png",
+    "ok": true
+  },
+  "shape": {
+    "examples": [
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>",
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>",
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      },
+      {
+        "command": "<string>",
+        "description": "<string>",
+        "name": "<string>",
+        "network": "<bool>",
+        "outputs": [
+          "<string>"
+        ]
+      }
+    ],
+    "ok": "<bool>"
+  }
+}

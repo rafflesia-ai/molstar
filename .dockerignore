@@ -1,0 +1,10 @@
+.DS_Store
+.git
+.ignore
+.molstar-cache
+bin
+dist
+node_modules
+outputs
+*.log
+tmp
