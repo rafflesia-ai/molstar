@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/sacha-ichbiah/molstar/internal/cli"
+	"github.com/rafflesia-ai/molstar/internal/cli"
 )
 
 func main() {

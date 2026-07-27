@@ -19,7 +19,7 @@
 
 ### Changed
 
-- The Go module is now `github.com/sacha-ichbiah/molstar`, matching the repo and the `molstar` binary.
+- The Go module is now `github.com/rafflesia-ai/molstar`, matching the repo and the `molstar` binary.
 - `mdsrv-headless`, the standalone structural-biology tool CLIs, and their docs, schemas, examples, scripts, and CI jobs stay in `headlessmolstar` and are no longer built, packaged, or referenced here.
 - Runtime identifiers that read `headlessmolstar` (Prometheus metric names, the `/health` `service` field, the `headlessmolstar.agent-doctor/v1` contract, the `headlessmolstar-worker-v1` renderer protocol, XDG paths, the job schema filename, the npm and Python package names) are unchanged — they are published contract surface.
 - The release gate now includes TypeScript typechecking and renderer JavaScript syntax checking.

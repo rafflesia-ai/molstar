@@ -13,9 +13,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
-	"github.com/sacha-ichbiah/molstar/internal/mvs"
-	"github.com/sacha-ichbiah/molstar/internal/render"
+	"github.com/rafflesia-ai/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/mvs"
+	"github.com/rafflesia-ai/molstar/internal/render"
 )
 
 func (s *renderJobStore) capabilities(ctx context.Context, cmd *cobra.Command) map[string]any {

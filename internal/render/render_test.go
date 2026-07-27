@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
-	"github.com/sacha-ichbiah/molstar/internal/mvs"
+	"github.com/rafflesia-ai/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/mvs"
 )
 
 func TestGoldenRenderProbe(t *testing.T) {

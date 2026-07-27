@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/sacha-ichbiah/molstar/internal/mvs"
+	"github.com/rafflesia-ai/molstar/internal/mvs"
 )
 
 type ciArtifactReport struct {

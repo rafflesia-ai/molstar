@@ -23,9 +23,9 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X github.com/sacha-ichbiah/molstar/internal/cli.buildVersion={{ .Version }}
-      - -X github.com/sacha-ichbiah/molstar/internal/cli.buildCommit={{ .Commit }}
-      - -X github.com/sacha-ichbiah/molstar/internal/cli.buildDate={{ .Date }}
+      - -X github.com/rafflesia-ai/molstar/internal/cli.buildVersion={{ .Version }}
+      - -X github.com/rafflesia-ai/molstar/internal/cli.buildCommit={{ .Commit }}
+      - -X github.com/rafflesia-ai/molstar/internal/cli.buildDate={{ .Date }}
 
 archives:
   - id: cli-archives
@@ -70,10 +70,10 @@ changelog:
 homebrew_casks:
   - name: molstar
     repository:
-      owner: sacha-ichbiah
+      owner: rafflesia-ai
       name: homebrew-tap
     directory: Casks
-    homepage: https://github.com/sacha-ichbiah/molstar
+    homepage: https://github.com/rafflesia-ai/molstar
     description: Headless Mol* renderer CLI for agents
     ids:
       - cli-archives
@@ -82,7 +82,7 @@ homebrew_casks:
 
 dockers_v2:
   - images:
-      - ghcr.io/sacha-ichbiah/molstar
+      - ghcr.io/rafflesia-ai/molstar
     tags:
       - "{{ .Version }}"
       - latest

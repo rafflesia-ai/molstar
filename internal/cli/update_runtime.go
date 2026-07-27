@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sacha-ichbiah/molstar/internal/render"
+	"github.com/rafflesia-ai/molstar/internal/render"
 )
 
 type updateRuntimeFlags struct {

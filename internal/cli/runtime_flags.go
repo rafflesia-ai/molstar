@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/job"
 )
 
 type runtimeFlags struct {

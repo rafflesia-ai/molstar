@@ -13,9 +13,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
-	"github.com/sacha-ichbiah/molstar/internal/mvs"
-	"github.com/sacha-ichbiah/molstar/internal/render"
+	"github.com/rafflesia-ai/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/mvs"
+	"github.com/rafflesia-ai/molstar/internal/render"
 )
 
 type outputReport struct {

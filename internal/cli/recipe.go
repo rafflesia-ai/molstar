@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
-	"github.com/sacha-ichbiah/molstar/internal/mvs"
-	"github.com/sacha-ichbiah/molstar/internal/recipe"
+	"github.com/rafflesia-ai/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/mvs"
+	"github.com/rafflesia-ai/molstar/internal/recipe"
 )
 
 func (a app) recipeCommand() *cobra.Command {

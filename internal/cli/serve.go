@@ -19,9 +19,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
-	"github.com/sacha-ichbiah/molstar/internal/mvs"
-	"github.com/sacha-ichbiah/molstar/internal/render"
+	"github.com/rafflesia-ai/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/mvs"
+	"github.com/rafflesia-ai/molstar/internal/render"
 )
 
 const maxHTTPJobBytes int64 = 32 << 20

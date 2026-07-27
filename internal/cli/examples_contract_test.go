@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
-	"github.com/sacha-ichbiah/molstar/internal/mvs"
-	"github.com/sacha-ichbiah/molstar/internal/recipe"
+	"github.com/rafflesia-ai/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/mvs"
+	"github.com/rafflesia-ai/molstar/internal/recipe"
 )
 
 func TestMolstarExamplesContract(t *testing.T) {

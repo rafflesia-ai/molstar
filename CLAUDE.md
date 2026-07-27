@@ -23,4 +23,4 @@ Identifiers reading `headlessmolstar` (Prometheus metric names, the `/health` `s
 config/data paths, the job schema filename, the npm package name, the Python package name) are
 **published contract surface and are deliberately not renamed**. The npm package in particular cannot
 be called `molstar`, because it depends on the upstream `molstar` package. The binary is `molstar`;
-the Go module is `github.com/sacha-ichbiah/molstar`.
+the Go module is `github.com/rafflesia-ai/molstar`.

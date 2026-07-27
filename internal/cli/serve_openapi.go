@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/sacha-ichbiah/molstar/internal/job"
+import "github.com/rafflesia-ai/molstar/internal/job"
 
 func serveOpenAPISchema() map[string]any {
 	errorSchema := map[string]any{

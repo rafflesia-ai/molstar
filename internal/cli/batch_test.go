@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/job"
 )
 
 func imageJob(inputID string) job.Job {

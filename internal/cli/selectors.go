@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sacha-ichbiah/molstar/internal/mvs"
+	"github.com/rafflesia-ai/molstar/internal/mvs"
 )
 
 func (a app) selectorsCommand() *cobra.Command {

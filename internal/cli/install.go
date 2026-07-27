@@ -13,7 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sacha-ichbiah/molstar/internal/render"
+	"github.com/rafflesia-ai/molstar/internal/render"
 )
 
 type installFlags struct {
@@ -145,7 +145,7 @@ func (a app) runInstallLocal(ctx context.Context, flags *installFlags) (installR
 }
 
 func localBuildLDFlags(home string) string {
-	const pkg = "github.com/sacha-ichbiah/molstar/internal/cli"
+	const pkg = "github.com/rafflesia-ai/molstar/internal/cli"
 	version := packageVersion(home)
 	if version == "" {
 		version = "dev"

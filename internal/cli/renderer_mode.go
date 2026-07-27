@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/sacha-ichbiah/molstar/internal/render"
+	"github.com/rafflesia-ai/molstar/internal/render"
 )
 
 type workerRendererSelection struct {

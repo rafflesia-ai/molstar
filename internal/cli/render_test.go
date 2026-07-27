@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/job"
 )
 
 func TestFirstOutputSize(t *testing.T) {

@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sacha-ichbiah/molstar/internal/job"
-	"github.com/sacha-ichbiah/molstar/internal/render"
+	"github.com/rafflesia-ai/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/render"
 )
 
 func TestInstallLocalCommandInstallsBinaryAndConfig(t *testing.T) {

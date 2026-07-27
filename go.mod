@@ -1,4 +1,4 @@
-module github.com/sacha-ichbiah/molstar
+module github.com/rafflesia-ai/molstar
 
 go 1.22
 
