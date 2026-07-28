@@ -8,6 +8,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/rafflesia-ai/molstar/internal/job"
+	"github.com/rafflesia-ai/molstar/internal/mvs"
+	"github.com/rafflesia-ai/molstar/internal/recipe"
 )
 
 func TestRecipeInitValidateCompileAndNormalize(t *testing.T) {
@@ -231,5 +235,64 @@ func TestCompletionCommand(t *testing.T) {
 	}
 	if !strings.Contains(stdout, "molstar") {
 		t.Fatalf("completion output did not mention molstar")
+	}
+}
+
+// A preset's focus names one of that preset's own components. When a recipe
+// supplies its own components the preset's are discarded, so inheriting the
+// preset's focus left the scene pointing at a component that no longer existed:
+// compilation failed naming a focus the author never wrote.
+func TestRecipePresetFocusIsDroppedWithCustomComponents(t *testing.T) {
+	a := app{}
+
+	// Preset alone: its components and its focus are both used.
+	preset, err := a.recipeToJob(recipe.Recipe{
+		Version: 1, Kind: "recipe", Preset: "ligand",
+		Input: job.Input{ID: "1cbs", Provider: "pdbe"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if preset.Scene.Camera.Focus != "ligand" {
+		t.Fatalf("preset focus = %q, want ligand", preset.Scene.Camera.Focus)
+	}
+
+	// Custom components: the preset's focus must not survive, because the
+	// component it names is gone.
+	custom, err := a.recipeToJob(recipe.Recipe{
+		Version: 1, Kind: "recipe", Preset: "ligand",
+		Input: job.Input{ID: "1cbs", Provider: "pdbe"},
+		Components: []job.Component{{
+			Ref: "custom", Select: "chain:A",
+			Representation: job.Representation{Type: "surface"},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if custom.Scene.Camera.Focus != "" {
+		t.Fatalf("focus = %q, want empty when the preset's components were replaced", custom.Scene.Camera.Focus)
+	}
+	if err := custom.ValidateRender(); err != nil {
+		t.Fatalf("recipe with custom components should compile: %v", err)
+	}
+	if _, err := mvs.Compile(custom); err != nil {
+		t.Fatalf("scene should compile: %v", err)
+	}
+
+	// An explicit focus always wins.
+	explicit, err := a.recipeToJob(recipe.Recipe{
+		Version: 1, Kind: "recipe", Preset: "ligand", Focus: "custom",
+		Input: job.Input{ID: "1cbs", Provider: "pdbe"},
+		Components: []job.Component{{
+			Ref: "custom", Select: "chain:A",
+			Representation: job.Representation{Type: "surface"},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if explicit.Scene.Camera.Focus != "custom" {
+		t.Fatalf("explicit focus = %q, want custom", explicit.Scene.Camera.Focus)
 	}
 }

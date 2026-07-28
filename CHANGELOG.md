@@ -28,6 +28,7 @@
 
 ### Fixed
 
+- A recipe that sets `preset` and its own `components` compiles again. Explicit components replace the preset's, but the preset's `focus` was inherited regardless, leaving the camera pointed at a component that no longer existed — so the compile failed naming a focus the author never wrote. The preset's focus is now used only when its components are. `recipe explain` also reports the focus the compiled job actually carries instead of recomputing it.
 - Coordinates-only (`xtc`, `nctraj`, `dcd`, `trr`) and topology-only (`psf`, `prmtop`, `top`) inputs are rejected during validation. Each describes half a structure and MVS pairs them with a `coordinates_ref` that this job schema cannot express, so such a job compiled into a document Mol\* refused — reported as a retryable renderer failure rather than the unsupported input it is. Single-file structure formats, including `gro`, are unaffected.
 - A renderer worker that dies mid-request reports that it exited, instead of the bare `EOF` from the underlying pipe read, and classifies as a retryable `renderer_unavailable` — the pool respawns, so resubmitting usually succeeds.
 - A job whose only outputs are exports (`mvsj`, `mvsx`, `molj`) now succeeds. It wrote the artifact correctly and then failed with `no image or video outputs configured`, so a pipeline gating on the exit code discarded a good bundle. A job that produces nothing at all is still rejected.

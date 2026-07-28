@@ -236,11 +236,13 @@ func (a app) recipeExplainCommand() *cobra.Command {
 					"file":   name,
 					"schema": schema,
 					"recipe": map[string]any{
-						"name":           r.Name,
-						"preset":         normalizedPreset(r.Preset),
-						"input":          r.NormalizedInput(),
-						"background":     firstNonEmpty(r.Background, "white"),
-						"focus":          firstNonEmpty(r.Focus, presetDefaultFocus(normalizedPreset(r.Preset))),
+						"name":       r.Name,
+						"preset":     normalizedPreset(r.Preset),
+						"input":      r.NormalizedInput(),
+						"background": firstNonEmpty(r.Background, "white"),
+						// Report the focus the job actually carries rather than
+						// recomputing it, so explain cannot drift from what compiles.
+						"focus":          j.Scene.Camera.Focus,
 						"view":           r.View,
 						"zoom":           r.Zoom,
 						"components":     len(j.Scene.Structures[0].Components),
@@ -395,10 +397,18 @@ func (a app) recipeToJob(r recipe.Recipe) (job.Job, error) {
 		return job.Job{}, fmt.Errorf("unsupported preset %q", r.Preset)
 	}
 	components := r.Components
-	if len(components) == 0 {
+	usingPresetComponents := len(components) == 0
+	if usingPresetComponents {
 		components = presetDef.Components
 	}
-	focus := firstNonEmpty(r.Focus, presetDef.Focus)
+	// A preset's focus names one of that preset's own components. When the recipe
+	// supplies its own components the preset's are discarded, so inheriting its
+	// focus left the scene pointing at a component that no longer existed and
+	// compilation failed naming a focus the author never wrote.
+	focus := r.Focus
+	if focus == "" && usingPresetComponents {
+		focus = presetDef.Focus
+	}
 	input := r.NormalizedInput()
 	background := firstNonEmpty(r.Background, "white")
 	size := r.Size
