@@ -213,12 +213,14 @@ func probeInstalledRuntime(runtimeRoot string, config render.RuntimeConfig, time
 }
 
 // firstMeaningfulLine picks the most informative line out of a Node stack trace:
-// the "Error: ..." line if there is one, otherwise the first non-blank line.
+// the error line if there is one, otherwise the first non-blank line. Node
+// prefixes the offending source and a caret before it, and names the class —
+// "SyntaxError:", "TypeError:" — so match the suffix rather than a bare "Error:".
 func firstMeaningfulLine(text string) string {
 	lines := strings.Split(text, "\n")
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "Error:") {
+		if name, _, found := strings.Cut(trimmed, ": "); found && strings.HasSuffix(name, "Error") && !strings.ContainsAny(name, " \t") {
 			return trimmed
 		}
 	}

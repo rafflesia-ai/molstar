@@ -34,6 +34,7 @@
 
 ### Fixed
 
+- `scene validate --json` reports what the MVS validator actually said. The validator explains the problem precisely — `Invalid root node kind "bogus", root must be of kind "root"` — but only on stderr, so the JSON envelope carried a bare `exit status 1` and a caller reading `--json`, the documented way, got an exit code and nothing else.
 - `install-artifact` verifies that the runtime it just installed can actually run, instead of reporting success when the expected files merely exist. An artifact built for another Node ABI, or a truncated download, passed the file check and then failed at the first render — while `doctor` and `update-runtime` both rejected the same runtime. The post-install probe matches `update-runtime`'s, reports the renderer's Node and Mol\* versions on success, and names the failing line on failure. `--verify=false` skips it.
 - `doctor_failed` maps to the `renderer_unavailable` agent code instead of falling through to `internal_error`, so a failed capability probe — the one failure `doctor` exists to report — is branchable.
 - A recipe that sets `preset` and its own `components` compiles again. Explicit components replace the preset's, but the preset's `focus` was inherited regardless, leaving the camera pointed at a component that no longer existed — so the compile failed naming a focus the author never wrote. The preset's focus is now used only when its components are. `recipe explain` also reports the focus the compiled job actually carries instead of recomputing it.

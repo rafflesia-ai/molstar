@@ -185,10 +185,31 @@ func (a app) validateMVS(cmd *cobra.Command, path string, noExtra bool, validate
 	if validateCommand != "" {
 		runner.ValidateCommand = strings.Fields(validateCommand)
 	}
-	if _, err := runner.ValidateMVS(cmd.Context(), path, noExtra); err != nil {
-		return markError(kindValidation, err)
+	result, err := runner.ValidateMVS(cmd.Context(), path, noExtra)
+	if err != nil {
+		// The validator explains exactly what is wrong — "Invalid root node kind
+		// \"bogus\", root must be of kind \"root\"" — but only on stderr. The JSON
+		// error carried a bare "exit status 1", so a caller reading --json, which
+		// is the documented way, got nothing to act on.
+		return markError(kindValidation, withCommandDetail(err, result))
 	}
 	return nil
+}
+
+// withCommandDetail folds a failed command's own output into the error, so the
+// JSON envelope carries the diagnosis rather than just an exit status.
+func withCommandDetail(err error, result render.CommandResult) error {
+	if err == nil {
+		return nil
+	}
+	detail := firstMeaningfulLine(result.Stderr)
+	if detail == "" {
+		detail = firstMeaningfulLine(result.Stdout)
+	}
+	if detail == "" {
+		return err
+	}
+	return fmt.Errorf("%w: %s", err, detail)
 }
 
 func (a app) writeValidateOK(jsonReport bool, path string) error {
