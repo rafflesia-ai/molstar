@@ -238,6 +238,11 @@ func agentErrorCode(err error) errorKind {
 		return kindServerBusy
 	case kindCanceled:
 		return kindCanceled
+	case kindDoctor:
+		// A failed capability probe means the renderer cannot run. Falling through
+		// to internal_error gave agents nothing to branch on for the one failure
+		// that doctor exists to report.
+		return kindRenderer
 	default:
 		return kindInternal
 	}

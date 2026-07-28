@@ -3,8 +3,10 @@ package cli
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -106,5 +108,85 @@ func TestExtractTarGzAllowsInternalSymlink(t *testing.T) {
 	}
 	if _, err := os.Lstat(filepath.Join(target, "link.txt")); err != nil {
 		t.Fatalf("expected internal symlink to be created: %v", err)
+	}
+}
+
+// install-artifact only checked that the expected files existed, so it reported
+// ok for a runtime that doctor and update-runtime both rejected. An artifact
+// built for another Node ABI, or a truncated download, passes a file check and
+// then fails at the first render.
+func TestInstallArtifactVerifiesTheInstalledRuntime(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "src")
+	for _, sub := range []string{"scripts", filepath.Join("node_modules", ".bin"), "bin"} {
+		if err := os.MkdirAll(filepath.Join(source, sub), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// A runtime with the right shape whose renderer cannot actually run.
+	write := func(path, body string, mode os.FileMode) {
+		t.Helper()
+		if err := os.WriteFile(filepath.Join(source, path), []byte(body), mode); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("package.json", `{"name":"headlessmolstar"}`, 0o644)
+	write(filepath.Join("scripts", "render-mvs.js"), "process.exit(1)\n", 0o644)
+	write(filepath.Join("scripts", "molstar-node-cli.js"), "process.exit(1)\n", 0o644)
+	write(filepath.Join("node_modules", ".bin", "mvs-render"), "#!/bin/sh\nexit 1\n", 0o755)
+	write(filepath.Join("node_modules", ".bin", "mvs-validate"), "#!/bin/sh\nexit 1\n", 0o755)
+	write(filepath.Join("bin", "molstar"), "#!/bin/sh\nexit 0\n", 0o755)
+
+	args := func(extra ...string) []string {
+		base := []string{
+			"install-artifact",
+			"--artifact", source,
+			"--bin-dir", filepath.Join(dir, "bin"),
+			"--config", filepath.Join(dir, "config.json"),
+			"--install-deps=false",
+			"--verify-timeout", "30s",
+			"--force",
+			"--json",
+		}
+		return append(base, extra...)
+	}
+
+	stdout, _, err := runAppForTest(context.Background(), args()...)
+	if err == nil {
+		t.Fatalf("install should fail when the runtime cannot run\n%s", stdout)
+	}
+	if got := classifyError(err); got != kindDoctor {
+		t.Fatalf("classifyError = %q, want %q", got, kindDoctor)
+	}
+	// A failed probe is a renderer problem the caller can act on, not an
+	// unclassifiable internal error.
+	if got := agentErrorCode(err); got != kindRenderer {
+		t.Fatalf("agentErrorCode = %q, want renderer_unavailable", got)
+	}
+	if !strings.Contains(err.Error(), "capability probe") {
+		t.Fatalf("error should name the probe: %v", err)
+	}
+
+	// --verify=false installs without checking, for callers who want the old
+	// behaviour.
+	if _, _, err := runAppForTest(context.Background(), args("--verify=false")...); err != nil {
+		t.Fatalf("--verify=false should install without probing: %v", err)
+	}
+}
+
+// A Node stack trace buries the useful line; the envelope carries only a
+// message, so the probe failure has to name the cause itself.
+func TestFirstMeaningfulLinePicksTheErrorLine(t *testing.T) {
+	stack := "node:internal/modules/cjs/loader:1572\n  throw err;\n  ^\n\n" +
+		"Error: Cannot find module 'molstar/lib/commonjs/mol-canvas3d/canvas3d.js'\n" +
+		"    at Module._resolveFilename (node:internal/modules/cjs/loader:1568:15)\n"
+	if got := firstMeaningfulLine(stack); got != "Error: Cannot find module 'molstar/lib/commonjs/mol-canvas3d/canvas3d.js'" {
+		t.Fatalf("firstMeaningfulLine = %q", got)
+	}
+	if got := firstMeaningfulLine("\n\n  just a warning\n"); got != "just a warning" {
+		t.Fatalf("fallback line = %q", got)
+	}
+	if got := firstMeaningfulLine("   \n"); got != "" {
+		t.Fatalf("empty input should yield empty, got %q", got)
 	}
 }

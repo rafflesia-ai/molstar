@@ -43,6 +43,7 @@ func TestErrorCodeMatrix(t *testing.T) {
 		{kindRendererABI, "renderer_unavailable", 5, true},
 		{kindRender, "renderer_unavailable", 5, true},
 		{kindServerBusy, "server_busy", 9, true},
+		{kindDoctor, "renderer_unavailable", 6, true},
 		{kindCanceled, "canceled", 130, false},
 		{kindInternal, "internal_error", 1, false},
 	}

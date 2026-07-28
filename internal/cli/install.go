@@ -26,15 +26,20 @@ type installFlags struct {
 }
 
 type installReport struct {
-	OK          bool              `json:"ok"`
-	Binary      string            `json:"binary"`
-	Binaries    map[string]string `json:"binaries,omitempty"`
-	Config      string            `json:"config"`
-	Home        string            `json:"home"`
-	Source      string            `json:"source,omitempty"`
-	Renderer    string            `json:"renderer"`
-	Validator   string            `json:"validator"`
-	Overwritten bool              `json:"overwritten,omitempty"`
+	OK       bool              `json:"ok"`
+	Binary   string            `json:"binary"`
+	Binaries map[string]string `json:"binaries,omitempty"`
+	Config   string            `json:"config"`
+	Home     string            `json:"home"`
+	Source   string            `json:"source,omitempty"`
+	Renderer string            `json:"renderer"`
+	// Capabilities is the probe of the runtime that was just installed. Checking
+	// that the expected files exist is not the same as checking that they run:
+	// an artifact built for another Node ABI, or a truncated download, passes a
+	// file check and then fails at the first render.
+	Capabilities *render.CapabilitiesReport `json:"capabilities,omitempty"`
+	Validator    string                     `json:"validator"`
+	Overwritten  bool                       `json:"overwritten,omitempty"`
 }
 
 func (a app) installLocalCommand() *cobra.Command {

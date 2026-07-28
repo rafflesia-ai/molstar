@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -19,18 +20,20 @@ import (
 )
 
 type installArtifactFlags struct {
-	artifact    string
-	prefix      string
-	binDir      string
-	name        string
-	configPath  string
-	force       bool
-	installDeps bool
-	jsonReport  bool
+	artifact      string
+	prefix        string
+	binDir        string
+	name          string
+	configPath    string
+	force         bool
+	installDeps   bool
+	verify        bool
+	verifyTimeout time.Duration
+	jsonReport    bool
 }
 
 func (a app) installArtifactCommand() *cobra.Command {
-	flags := &installArtifactFlags{name: "molstar", installDeps: true}
+	flags := &installArtifactFlags{name: "molstar", installDeps: true, verify: true, verifyTimeout: 60 * time.Second}
 	cmd := &cobra.Command{
 		Use:   "install-artifact",
 		Short: "Install a packaged headless Mol* artifact",
@@ -58,6 +61,8 @@ func (a app) installArtifactCommand() *cobra.Command {
 	cmd.Flags().StringVar(&flags.binDir, "bin-dir", "", "directory to install the molstar binary into")
 	cmd.Flags().StringVar(&flags.name, "name", "molstar", "installed executable name")
 	cmd.Flags().StringVar(&flags.configPath, "config", "", "config path; defaults to XDG config or ~/.config/molstar/config.json")
+	cmd.Flags().BoolVar(&flags.verify, "verify", true, "probe the installed runtime and fail if it cannot render")
+	cmd.Flags().DurationVar(&flags.verifyTimeout, "verify-timeout", 60*time.Second, "timeout for the post-install capability probe")
 	cmd.Flags().BoolVar(&flags.force, "force", false, "overwrite existing executable or runtime directory")
 	cmd.Flags().BoolVar(&flags.installDeps, "install-deps", true, "run npm install when renderer dependencies are missing")
 	cmd.Flags().BoolVar(&flags.jsonReport, "json", false, "write a machine-readable report")
@@ -157,7 +162,7 @@ func (a app) finishArtifactInstall(runtimeRoot, source string, flags *installArt
 	if err := render.WriteRuntimeConfig(configPath, config); err != nil {
 		return installReport{}, markError(kindRender, err)
 	}
-	return installReport{
+	report := installReport{
 		OK:          true,
 		Binary:      target,
 		Binaries:    binaries,
@@ -167,7 +172,62 @@ func (a app) finishArtifactInstall(runtimeRoot, source string, flags *installArt
 		Renderer:    strings.Join(config.RendererCommand, " "),
 		Validator:   strings.Join(config.ValidateCommand, " "),
 		Overwritten: overwritten,
-	}, nil
+	}
+	// Prove the installed runtime actually runs, the same way update-runtime
+	// does. Without this, install reported ok for a runtime that doctor and
+	// update-runtime both rejected.
+	if flags.verify {
+		capabilities, err := probeInstalledRuntime(runtimeRoot, config, flags.verifyTimeout)
+		report.Capabilities = capabilities
+		if err != nil {
+			report.OK = false
+			return report, err
+		}
+	}
+	return report, nil
+}
+
+// probeInstalledRuntime runs the renderer's capability probe against a freshly
+// installed runtime.
+func probeInstalledRuntime(runtimeRoot string, config render.RuntimeConfig, timeout time.Duration) (*render.CapabilitiesReport, error) {
+	runner := render.NewMolstar()
+	runner.Stdout = nil
+	runner.Stderr = nil
+	runner.Quiet = true
+	runner.RendererCommand = config.RendererCommand
+	runner.WorkingDirectory = runtimeRoot
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	capabilities := runner.Capabilities(ctx)
+	if !capabilities.OK {
+		// The envelope carries only a message, so fold in the probe's own stderr:
+		// "exit status 1" alone hides the actionable line, which is usually a
+		// missing module or a Node ABI mismatch.
+		detail := strings.TrimSpace(capabilities.Error)
+		if stderr := strings.TrimSpace(capabilities.Command.Stderr); stderr != "" {
+			detail = detail + ": " + firstMeaningfulLine(stderr)
+		}
+		return &capabilities, markError(kindDoctor, fmt.Errorf("installed runtime failed its capability probe: %s; re-run with --verify=false to install without checking, then investigate with `molstar doctor --json`", detail))
+	}
+	return &capabilities, nil
+}
+
+// firstMeaningfulLine picks the most informative line out of a Node stack trace:
+// the "Error: ..." line if there is one, otherwise the first non-blank line.
+func firstMeaningfulLine(text string) string {
+	lines := strings.Split(text, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "Error:") {
+			return trimmed
+		}
+	}
+	for _, line := range lines {
+		if trimmed := strings.TrimSpace(line); trimmed != "" {
+			return trimmed
+		}
+	}
+	return ""
 }
 
 func installArtifactDirectory(source string, prefix string, force bool) (string, error) {

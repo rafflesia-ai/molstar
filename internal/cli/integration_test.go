@@ -141,6 +141,9 @@ func TestInstallArtifactCommandInstallsUnpackedRuntime(t *testing.T) {
 		"--config", configPath,
 		"--name", "molstar-artifact",
 		"--install-deps=false",
+		// This artifact is a stub that exercises unpack/copy/config mechanics; it
+		// has no working renderer, so skip the post-install capability probe.
+		"--verify=false",
 		"--force",
 		"--json",
 	)
@@ -190,6 +193,9 @@ func TestInstallArtifactCommandInstallsZipRuntime(t *testing.T) {
 		"--config", configPath,
 		"--name", "molstar-zip",
 		"--install-deps=false",
+		// This artifact is a stub that exercises unpack/copy/config mechanics; it
+		// has no working renderer, so skip the post-install capability probe.
+		"--verify=false",
 		"--force",
 		"--json",
 	)
