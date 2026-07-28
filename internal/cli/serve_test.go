@@ -1427,3 +1427,33 @@ func TestRPCRenderAppliesRuntimePolicy(t *testing.T) {
 		t.Fatalf("expected /rpc render to enforce operator allow-path policy, got: %s", response.Body.String())
 	}
 }
+
+// A unix socket path over the sun_path limit fails deep in the kernel as a bare
+// "bind: invalid argument", which says nothing about the real constraint. CI
+// temp directories routinely exceed it.
+func TestExplainListenErrorNamesTheRealConstraint(t *testing.T) {
+	bindErr := errors.New("listen unix /very/long/path: bind: invalid argument")
+	longPath := "/tmp/" + strings.Repeat("d", unixSocketPathLimit) + "/molstar.sock"
+	explained := explainListenError("unix", longPath, bindErr)
+	if !strings.Contains(explained.Error(), "over the") || !strings.Contains(explained.Error(), "--socket") {
+		t.Fatalf("over-long socket error should explain the limit: %v", explained)
+	}
+	if !errors.Is(explained, bindErr) {
+		t.Fatal("the original bind error must stay wrapped")
+	}
+
+	inUse := errors.New("listen tcp 127.0.0.1:8080: bind: address already in use")
+	explained = explainListenError("tcp", "127.0.0.1:8080", inUse)
+	if !strings.Contains(explained.Error(), "--addr") {
+		t.Fatalf("address-in-use error should suggest --addr: %v", explained)
+	}
+
+	// A short socket path and unrelated errors pass through untouched.
+	other := errors.New("listen unix /tmp/s.sock: permission denied")
+	if got := explainListenError("unix", "/tmp/s.sock", other); got != other {
+		t.Fatalf("unrelated errors should pass through, got %v", got)
+	}
+	if explainListenError("tcp", "127.0.0.1:1", nil) != nil {
+		t.Fatal("nil should stay nil")
+	}
+}

@@ -317,49 +317,55 @@ func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cm
 	if cleanup != nil {
 		defer cleanup()
 	}
-	if len(outputs) == 0 {
-		return markError(kindInvalidInput, fmt.Errorf("no image or video outputs configured"))
+	// A job whose only outputs are exports (mvsj, mvsx, molj) is a legitimate
+	// "compile this to a portable bundle" run: compileJobForRender has already
+	// written them. It used to write the files correctly and then fail, so a
+	// pipeline gating on the exit code threw away a good artifact.
+	if len(outputs) == 0 && len(report.OutputFiles) == 0 {
+		return markError(kindInvalidInput, fmt.Errorf("job produced no outputs; configure an image, video, mvsj, mvsx, or molj output"))
 	}
-	if err := (job.Job{Runtime: runtime, Outputs: outputs}).ValidateRuntimeLimits(); err != nil {
-		return markError(kindRuntime, err)
-	}
-	ctx, cancel := contextWithRuntimeTimeout(ctx, runtime)
-	defer cancel()
-	workerStderr := a.stderr
-	if runner.Quiet {
-		workerStderr = nil
-	}
-	selection, err := selectWorkerRenderer(flags.rendererMode, flags.workerCommand, 1, runner, workerStderr, flags.dryRun)
-	if err != nil {
-		return markError(kindRuntime, err)
-	}
-	if selection.Close != nil {
-		defer selection.Close()
-	}
-	renderer := render.ImageRenderer(runner)
-	if selection.Pool != nil {
-		renderer = selection.Pool
-	}
-	if report.Diagnostics == nil {
-		report.Diagnostics = map[string]any{}
-	}
-	report.Diagnostics["renderer_mode"] = selection.Mode
-	if selection.FallbackError != nil {
-		report.Diagnostics["worker_fallback"] = selection.FallbackError.Error()
-		report.Warnings = append(report.Warnings, "worker fallback: "+selection.FallbackError.Error())
-	}
-	for i, output := range outputs {
-		saveMolj := stateOut != "" && i == 0
-		stageStart := time.Now()
-		result, outputReports, err := renderTransactional(ctx, renderer, scenePath, output, saveMolj, stateOut, flags.dryRun)
-		report.finishStage("render_output", output.Path, stageStart, err)
-		report.Commands = append(report.Commands, result)
-		if err != nil {
-			return markError(kindRender, err)
+	if len(outputs) > 0 {
+		if err := (job.Job{Runtime: runtime, Outputs: outputs}).ValidateRuntimeLimits(); err != nil {
+			return markError(kindRuntime, err)
 		}
-		for _, outputReport := range outputReports {
-			report.Outputs = append(report.Outputs, outputReport.Path)
-			report.OutputFiles = append(report.OutputFiles, outputReport)
+		ctx, cancel := contextWithRuntimeTimeout(ctx, runtime)
+		defer cancel()
+		workerStderr := a.stderr
+		if runner.Quiet {
+			workerStderr = nil
+		}
+		selection, err := selectWorkerRenderer(flags.rendererMode, flags.workerCommand, 1, runner, workerStderr, flags.dryRun)
+		if err != nil {
+			return markError(kindRuntime, err)
+		}
+		if selection.Close != nil {
+			defer selection.Close()
+		}
+		renderer := render.ImageRenderer(runner)
+		if selection.Pool != nil {
+			renderer = selection.Pool
+		}
+		if report.Diagnostics == nil {
+			report.Diagnostics = map[string]any{}
+		}
+		report.Diagnostics["renderer_mode"] = selection.Mode
+		if selection.FallbackError != nil {
+			report.Diagnostics["worker_fallback"] = selection.FallbackError.Error()
+			report.Warnings = append(report.Warnings, "worker fallback: "+selection.FallbackError.Error())
+		}
+		for i, output := range outputs {
+			saveMolj := stateOut != "" && i == 0
+			stageStart := time.Now()
+			result, outputReports, err := renderTransactional(ctx, renderer, scenePath, output, saveMolj, stateOut, flags.dryRun)
+			report.finishStage("render_output", output.Path, stageStart, err)
+			report.Commands = append(report.Commands, result)
+			if err != nil {
+				return markError(kindRender, err)
+			}
+			for _, outputReport := range outputReports {
+				report.Outputs = append(report.Outputs, outputReport.Path)
+				report.OutputFiles = append(report.OutputFiles, outputReport)
+			}
 		}
 	}
 	if flags.reportOut != "" {

@@ -219,6 +219,73 @@ func TestRenderReportFileCarriesRunID(t *testing.T) {
 	}
 }
 
+// A job whose only outputs are exports (mvsj, mvsx, molj) is a legitimate
+// "compile this to a portable bundle" run. It wrote the artifact correctly and
+// then reported failure with "no image or video outputs configured", so a
+// pipeline gating on the exit code threw away a good bundle.
+func TestExportOnlyJobsSucceed(t *testing.T) {
+	dir := t.TempDir()
+	modelPath := filepath.Join(dir, "one.cif")
+	if err := os.WriteFile(modelPath, []byte(oneAtomCIF), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	build := func(outputs []job.Output) string {
+		j := job.Job{
+			Version: 1,
+			Runtime: job.Runtime{AllowPaths: []string{dir}},
+			Inputs:  map[string]job.Input{"p": {Path: modelPath, Format: "mmcif"}},
+			Scene: job.Scene{Structures: []job.Structure{{
+				Ref:        "s",
+				Source:     "p",
+				Components: []job.Component{{Ref: "c", Select: "all", Representation: job.Representation{Type: "spacefill"}}},
+			}}},
+			Outputs: outputs,
+		}
+		data, err := json.Marshal(j)
+		if err != nil {
+			t.Fatal(err)
+		}
+		path := filepath.Join(dir, fmt.Sprintf("job-%d.json", len(outputs)))
+		if err := os.WriteFile(path, data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+
+	for _, tc := range []struct {
+		name   string
+		output job.Output
+	}{
+		{"mvsj", job.Output{Type: "mvsj", Path: filepath.Join(dir, "scene.mvsj")}},
+		{"mvsx", job.Output{Type: "mvsx", Path: filepath.Join(dir, "scene.mvsx")}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			stdout, _, err := runAppForTest(context.Background(), "render", build([]job.Output{tc.output}), "--json")
+			if err != nil {
+				t.Fatalf("%s-only job should succeed: %v\n%s", tc.name, err, stdout)
+			}
+			var report renderReport
+			if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+				t.Fatal(err)
+			}
+			if !report.OK {
+				t.Fatalf("%s-only report should be ok: %+v", tc.name, report)
+			}
+			if len(report.OutputFiles) == 0 {
+				t.Fatalf("%s-only report should list the exported file", tc.name)
+			}
+			if _, err := os.Stat(tc.output.Path); err != nil {
+				t.Fatalf("%s export missing: %v", tc.name, err)
+			}
+		})
+	}
+
+	// A job that produces nothing at all is still an error.
+	if _, _, err := runAppForTest(context.Background(), "render", build(nil), "--json"); err == nil {
+		t.Fatal("a job with no outputs should fail")
+	}
+}
+
 // Transport failures during runtime preparation were typed kindRuntime before
 // the message was consulted, so a DNS or connection failure — the canonical
 // transient error — reported security_policy and retryable=false, telling

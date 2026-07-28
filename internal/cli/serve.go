@@ -116,7 +116,7 @@ func (a app) runServe(ctx context.Context, flags *serveFlags, cmd *cobra.Command
 	}
 	listener, err := net.Listen(network, address)
 	if err != nil {
-		return markError(kindRuntime, err)
+		return markError(kindRuntime, explainListenError(network, address, err))
 	}
 	defer listener.Close()
 	if network == "unix" {
@@ -1663,4 +1663,25 @@ func statusForError(err error) int {
 func queryBool(r *http.Request, key string) bool {
 	value := strings.ToLower(strings.TrimSpace(r.URL.Query().Get(key)))
 	return value == "1" || value == "true" || value == "yes" || value == "on"
+}
+
+// unixSocketPathLimit is the smallest sun_path capacity across the platforms
+// this CLI targets (104 on macOS/BSD, 108 on Linux). Exceeding it fails deep in
+// the kernel as a bare "bind: invalid argument", which says nothing about the
+// real constraint — and CI temp directories routinely blow past it.
+const unixSocketPathLimit = 104
+
+// explainListenError turns an opaque listen failure into something an operator
+// can act on.
+func explainListenError(network string, address string, err error) error {
+	if err == nil {
+		return nil
+	}
+	if network == "unix" && len(address) >= unixSocketPathLimit {
+		return fmt.Errorf("%w: the socket path is %d bytes, over the %d-byte limit for unix sockets; use a shorter --socket path", err, len(address), unixSocketPathLimit)
+	}
+	if strings.Contains(err.Error(), "address already in use") {
+		return fmt.Errorf("%w: another process is already listening there; stop it or choose a different --addr", err)
+	}
+	return err
 }
