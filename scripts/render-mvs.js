@@ -140,7 +140,7 @@ const { HeadlessPluginContext } = require('molstar/lib/commonjs/mol-plugin/headl
 const { DefaultPluginSpec, PluginSpec } = require('molstar/lib/commonjs/mol-plugin/spec.js');
 const { PluginStateObject } = require('molstar/lib/commonjs/mol-plugin-state/objects.js');
 const { StructureElement, StructureProperties } = require('molstar/lib/commonjs/mol-model/structure.js');
-const { defaultCanvas3DParams } = require('molstar/lib/commonjs/mol-plugin/util/headless-screenshot.js');
+const { defaultCanvas3DParams, defaultImagePassParams } = require('molstar/lib/commonjs/mol-plugin/util/headless-screenshot.js');
 const { Task } = require('molstar/lib/commonjs/mol-task/index.js');
 const { setFSModule } = require('molstar/lib/commonjs/mol-util/data-source.js');
 const { onelinerJsonString } = require('molstar/lib/commonjs/mol-util/json.js');
@@ -196,6 +196,7 @@ function parseArgs(argv) {
     output: '',
     size: { width: 800, height: 800 },
     molj: false,
+    transparent: false,
     noExtensions: false,
     format: undefined,
     jpegQuality: 90,
@@ -220,6 +221,9 @@ function parseArgs(argv) {
       case '-m':
       case '--molj':
         args.molj = true;
+        break;
+      case '--transparent':
+        args.transparent = true;
         break;
       case '-n':
       case '--no-extensions':
@@ -286,6 +290,7 @@ Options:
   -o, --output PATH         Output .png, .jpg, .jpeg, or .mp4 path
   -s, --size WIDTHxHEIGHT   Output size, default 800x800
   -m, --molj                Save Mol* state next to the output as .molj
+      --transparent         Render with a transparent background (PNG only)
   -n, --no-extensions       Disable builtin MVS loading extensions
       --format png|jpeg     Override image format
       --jpeg-quality N      JPEG quality, default 90
@@ -333,20 +338,29 @@ function parseInspectArgs(argv) {
   return args;
 }
 
-async function createPlugin(size) {
+async function createPlugin(size, options = {}) {
   probeWebGLContext();
   const externalModules = { gl, pngjs, 'jpeg-js': jpegjs };
   const spec = DefaultPluginSpec();
   spec.behaviors.push(PluginSpec.Behavior(MolViewSpec));
   spec.behaviors.push(PluginSpec.Behavior(Mp4Export));
   spec.behaviors.push(PluginSpec.Behavior(MAQualityAssessment));
+  const transparent = Boolean(options.transparent);
   const headlessCanvasOptions = defaultCanvas3DParams();
   const canvasOptions = {
     ...ParamDefinition.getDefaultValues(Canvas3DParams),
     cameraResetDurationMs: headlessCanvasOptions.cameraResetDurationMs,
     postprocessing: headlessCanvasOptions.postprocessing,
+    transparentBackground: transparent,
   };
-  const plugin = new HeadlessPluginContext(externalModules, spec, size, { canvas: canvasOptions });
+  // The saved image comes from the image pass, which carries its own
+  // transparentBackground: setting it only on the Canvas3D leaves the rendered
+  // PNG opaque.
+  const imagePassOptions = { ...defaultImagePassParams(), transparentBackground: transparent };
+  const plugin = new HeadlessPluginContext(externalModules, spec, size, {
+    canvas: canvasOptions,
+    imagePass: imagePassOptions,
+  });
   try {
     await plugin.init();
     return plugin;
@@ -495,7 +509,7 @@ async function renderWithPlugin(plugin, args) {
 }
 
 async function renderOnce(args) {
-  const plugin = await createPlugin(args.size);
+  const plugin = await createPlugin(args.size, { transparent: args.transparent });
   try {
     return await renderWithPlugin(plugin, args);
   } finally {
@@ -798,13 +812,16 @@ let workerPlugin = null;
 let workerPluginSize = '';
 
 async function renderWorkerJob(args) {
-  const sizeKey = `${args.size.width}x${args.size.height}`;
+  // Transparency is a plugin-level canvas setting, so it belongs in the cache
+  // key: a worker warmed for opaque output would otherwise silently serve
+  // opaque images to a job that asked for an alpha channel.
+  const sizeKey = `${args.size.width}x${args.size.height}:${args.transparent ? 'rgba' : 'rgb'}`;
   if (!workerPlugin || workerPluginSize !== sizeKey) {
     if (workerPlugin) {
       workerPlugin.dispose();
       workerPlugin = null;
     }
-    workerPlugin = await createPlugin(args.size);
+    workerPlugin = await createPlugin(args.size, { transparent: args.transparent });
     workerPluginSize = sizeKey;
   }
   return renderWithPlugin(workerPlugin, args);
@@ -828,6 +845,7 @@ function argsFromWorkerParams(params) {
       height: Number(params.height || (params.size && params.size.height) || 800),
     },
     molj: Boolean(params.molj),
+    transparent: Boolean(params.transparent),
     noExtensions: Boolean(params.noExtensions),
     format: params.format ? normalizeFormat(params.format) : undefined,
     jpegQuality: params.jpegQuality ? parseInteger(params.jpegQuality, 'jpegQuality') : 90,

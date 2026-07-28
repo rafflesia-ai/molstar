@@ -239,11 +239,12 @@ func (w *workerProcess) render(ctx context.Context, request ImageRequest) (Comma
 		return CommandResult{}, err
 	}
 	params := map[string]any{
-		"input":  request.InputMVS,
-		"output": request.Output.Path,
-		"width":  width,
-		"height": height,
-		"molj":   request.SaveMolj,
+		"input":       request.InputMVS,
+		"output":      request.Output.Path,
+		"width":       width,
+		"height":      height,
+		"molj":        request.SaveMolj,
+		"transparent": request.Output.Transparent,
 	}
 	start := time.Now()
 	result := CommandResult{

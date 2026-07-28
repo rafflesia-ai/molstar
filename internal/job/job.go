@@ -157,6 +157,9 @@ func (j Job) ValidateScene() error {
 			}
 		}
 	}
+	if err := validateCanvasBackground(j.Scene.Canvas.Background); err != nil {
+		return err
+	}
 	if len(j.Scene.Camera.Target) > 0 && len(j.Scene.Camera.Target) != 3 {
 		return errors.New("scene.camera.target must contain exactly three numbers")
 	}
@@ -412,4 +415,39 @@ func (input Input) LocalPath() string {
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+// validateCanvasBackground catches the canvas background values that the
+// renderer rejects, so they fail as a scene problem here instead of surfacing as
+// an opaque renderer failure. Mol* accepts a CSS color name or a hex string;
+// that name table lives upstream and is not duplicated here, so unknown names
+// still reach the renderer. Hex shape and the misleading "transparent" — which
+// is an output property, not a color — are checked.
+func validateCanvasBackground(background string) error {
+	value := strings.ToLower(strings.TrimSpace(background))
+	if value == "" {
+		return nil
+	}
+	switch value {
+	case "transparent", "none", "clear":
+		return fmt.Errorf("scene.canvas.background %q is not a color; request a transparent image with `transparent: true` on the output instead", background)
+	}
+	if strings.HasPrefix(value, "#") {
+		digits := value[1:]
+		if len(digits) != 3 && len(digits) != 6 {
+			return fmt.Errorf("scene.canvas.background %q is not a valid hex color; use #rgb or #rrggbb", background)
+		}
+		for _, r := range digits {
+			if !strings.ContainsRune("0123456789abcdef", r) {
+				return fmt.Errorf("scene.canvas.background %q is not a valid hex color; use #rgb or #rrggbb", background)
+			}
+		}
+		return nil
+	}
+	for _, r := range value {
+		if (r < 'a' || r > 'z') && r != ' ' {
+			return fmt.Errorf("scene.canvas.background %q is not a color name or hex string", background)
+		}
+	}
+	return nil
 }

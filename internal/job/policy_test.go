@@ -207,3 +207,28 @@ func TestValidateSceneRejectsDuplicateRefs(t *testing.T) {
 		t.Fatalf("empty refs should still validate: %v", err)
 	}
 }
+
+// "transparent" is an output property, not a canvas color. Mol* rejects it as a
+// color, so a job that set it compiled fine and then failed inside the renderer
+// as renderer_unavailable/retryable, hiding a plain authoring mistake.
+func TestValidateSceneChecksCanvasBackground(t *testing.T) {
+	for _, background := range []string{"transparent", "none", "clear"} {
+		err := validateCanvasBackground(background)
+		if err == nil {
+			t.Fatalf("background %q should be rejected", background)
+		}
+		if !strings.Contains(err.Error(), "transparent: true") {
+			t.Fatalf("error should point at the output property: %v", err)
+		}
+	}
+	for _, background := range []string{"#abc", "#CC3399", "white", "cornflower blue", ""} {
+		if err := validateCanvasBackground(background); err != nil {
+			t.Fatalf("background %q should validate: %v", background, err)
+		}
+	}
+	for _, background := range []string{"#12345", "#gggggg", "#", "rgb(1,2,3)", "0xffffff"} {
+		if err := validateCanvasBackground(background); err == nil {
+			t.Fatalf("malformed background %q should be rejected", background)
+		}
+	}
+}

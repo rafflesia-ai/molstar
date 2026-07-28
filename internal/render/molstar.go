@@ -121,6 +121,9 @@ func (m Molstar) renderImageArgs(command []string, request ImageRequest) []strin
 	if request.SaveMolj {
 		args = append(args, "--molj")
 	}
+	if request.Output.Transparent {
+		args = append(args, "--transparent")
+	}
 	if m.Quiet && commandSupportsQuiet(command) {
 		args = append(args, "--quiet")
 	}
