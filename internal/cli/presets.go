@@ -97,7 +97,10 @@ func allPresetDefinitions() []presetDefinition {
 		{
 			Name:        "surface",
 			Description: "Light polymer molecular surface with ligands shown in ball-and-stick.",
-			Focus:       "ligand",
+			// Focus the polymer, not the ligand. A molecular surface is opaque, so
+			// framing a buried ligand puts the camera inside the surface and the
+			// render shows an unreadable interior instead of the surface.
+			Focus: "polymer",
 			Components: []job.Component{
 				{Ref: "polymer", Select: "polymer", Representation: job.Representation{Type: "surface", Color: "#d8d8d8"}},
 				{Ref: "ligand", Select: "ligand", Representation: job.Representation{Type: "ball-and-stick", Color: "element"}},

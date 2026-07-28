@@ -213,6 +213,23 @@ func TestRenderReportFileCarriesRunID(t *testing.T) {
 	}
 }
 
+// Every fixture that overrides both --out and --size must set sizeExplicit,
+// otherwise the recipe's declared output size wins and the fixture's own output
+// verification rejects the render for having the wrong dimensions. This broke
+// `fixtures verify --network` for all three public recipe fixtures.
+func TestNetworkFixturesMarkTheirSizeExplicit(t *testing.T) {
+	flags := recipeFixtureRenderFlags(t.TempDir(), "ligand.png")
+	if flags.out == "" {
+		t.Fatal("recipe fixtures must set --out")
+	}
+	if flags.size != fixtureRenderSize {
+		t.Fatalf("recipe fixture size = %q, want %q", flags.size, fixtureRenderSize)
+	}
+	if !flags.sizeExplicit {
+		t.Fatal("recipe fixtures set --out and --size but not sizeExplicit, so the recipe's declared size wins and output verification fails")
+	}
+}
+
 // readRunBundle stopped enumerating entries once it had decoded run.json, so
 // verify reported bundles this tool had just written as missing their sidecars.
 func TestReadRunBundleEnumeratesEveryEntry(t *testing.T) {

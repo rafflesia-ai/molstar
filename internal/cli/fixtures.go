@@ -303,15 +303,31 @@ func (a app) runFixture(ctx context.Context, outDir string, definition fixtureDe
 		_, err = writeMVSXTransactional(filepath.Join(outDir, "local-scene.mvsx"), prepared, compiled.Document)
 		return err
 	case "ligand":
-		return a.runRender(ctx, "examples/ligand.recipe.yaml", &renderFlags{out: filepath.Join(outDir, "ligand.png"), size: "320x240", quiet: true, runtime: runtimeFlags{cache: filepath.Join(outDir, "cache")}}, a.rootCommand())
+		return a.runRender(ctx, "examples/ligand.recipe.yaml", recipeFixtureRenderFlags(outDir, "ligand.png"), a.rootCommand())
 	case "surface":
-		return a.runRender(ctx, "examples/surface.recipe.yaml", &renderFlags{out: filepath.Join(outDir, "surface.png"), size: "320x240", quiet: true, runtime: runtimeFlags{cache: filepath.Join(outDir, "cache")}}, a.rootCommand())
+		return a.runRender(ctx, "examples/surface.recipe.yaml", recipeFixtureRenderFlags(outDir, "surface.png"), a.rootCommand())
 	case "confidence":
-		return a.runRender(ctx, "examples/alphafold-confidence.recipe.yaml", &renderFlags{out: filepath.Join(outDir, "confidence.png"), size: "320x240", quiet: true, runtime: runtimeFlags{cache: filepath.Join(outDir, "cache")}}, a.rootCommand())
+		return a.runRender(ctx, "examples/alphafold-confidence.recipe.yaml", recipeFixtureRenderFlags(outDir, "confidence.png"), a.rootCommand())
 	default:
 		return fmt.Errorf("unknown fixture %q", definition.Name)
 	}
 }
+
+// recipeFixtureRenderFlags renders a public recipe small and fast. sizeExplicit
+// is required: the recipes declare their own 1200x900 output, which wins over
+// `size` unless the caller marks the size as chosen, and the fixture's output
+// verification then rejects the render for having the wrong dimensions.
+func recipeFixtureRenderFlags(outDir string, output string) *renderFlags {
+	return &renderFlags{
+		out:          filepath.Join(outDir, output),
+		size:         fixtureRenderSize,
+		sizeExplicit: true,
+		quiet:        true,
+		runtime:      runtimeFlags{cache: filepath.Join(outDir, "cache")},
+	}
+}
+
+const fixtureRenderSize = "320x240"
 
 func writeLocalFixtureJob(dir string, output string) (string, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {

@@ -1,6 +1,6 @@
 version: 1
 kind: recipe
-name: ligand surface render
+name: polymer surface render
 preset: surface
 input:
   id: 1cbs
@@ -10,9 +10,9 @@ runtime:
   cache: .molstar-cache
   strict: true
 background: white
-focus: ligand
+focus: polymer
 view: front
-zoom: 1.15
+zoom: 1.0
 size: [1200, 900]
 outputs:
   - type: image

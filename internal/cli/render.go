@@ -18,16 +18,20 @@ import (
 )
 
 type renderFlags struct {
-	out               string
-	mvsOut            string
-	stateOut          string
-	provider          string
-	format            string
-	assembly          string
-	background        string
-	focus             string
-	view              string
-	size              string
+	out        string
+	mvsOut     string
+	stateOut   string
+	provider   string
+	format     string
+	assembly   string
+	background string
+	focus      string
+	view       string
+	size       string
+	// sizeExplicit reports that the caller actually chose `size`, rather than
+	// inheriting the flag default. With --out, a job or recipe's declared output
+	// size wins unless this is set. Callers that build renderFlags directly must
+	// set it alongside `size`, or their size is silently ignored.
 	sizeExplicit      bool
 	preset            string
 	selectors         []string
