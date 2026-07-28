@@ -304,7 +304,10 @@ func (w *workerProcess) call(ctx context.Context, method string, params map[stri
 			errCh <- err
 			return
 		}
-		errCh <- io.EOF
+		// The worker closed its stdout without answering, which means the
+		// process died mid-request. A bare io.EOF here reached callers as the
+		// single word "EOF", telling an operator nothing about what happened.
+		errCh <- fmt.Errorf("renderer worker exited before answering %s: %w", method, io.EOF)
 	}()
 	select {
 	case response := <-responseCh:

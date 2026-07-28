@@ -340,6 +340,9 @@ func classifyError(err error) errorKind {
 		strings.Contains(message, "executable file not found") ||
 		strings.Contains(message, "command is not available") ||
 		strings.Contains(message, "empty worker command") ||
+		// A worker that dies mid-request is a transient renderer fault: the pool
+		// respawns, so resubmitting the same job usually succeeds.
+		strings.Contains(message, "renderer worker exited") ||
 		strings.Contains(message, "headless webgl context is unavailable") ||
 		strings.Contains(message, "gl returned null") ||
 		strings.Contains(message, "reading 'getextension'") ||

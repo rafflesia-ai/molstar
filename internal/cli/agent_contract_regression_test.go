@@ -713,3 +713,22 @@ func TestInspectStatsDistinguishUnparsedInputFromEmptySelection(t *testing.T) {
 		}
 	})
 }
+
+// A renderer worker that dies mid-request surfaced to callers as the single
+// word "EOF" — the raw pipe-read error — which says nothing about what
+// happened. The pool respawns, so the failure is a retryable renderer fault.
+func TestWorkerExitClassifiesAsRetryableRenderer(t *testing.T) {
+	err := fmt.Errorf("renderer worker exited before answering render: %w", io.EOF)
+	if got := classifyError(err); got != kindRenderer {
+		t.Fatalf("classifyError = %q, want %q", got, kindRenderer)
+	}
+	if got := agentErrorCode(err); got != "renderer_unavailable" {
+		t.Fatalf("agentErrorCode = %q, want renderer_unavailable", got)
+	}
+	if !errorRetryable(err) {
+		t.Fatal("a crashed worker should be retryable: the pool respawns")
+	}
+	if !strings.Contains(err.Error(), "exited") {
+		t.Fatalf("message should say the worker exited: %v", err)
+	}
+}

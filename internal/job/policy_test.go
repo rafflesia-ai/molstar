@@ -232,3 +232,42 @@ func TestValidateSceneChecksCanvasBackground(t *testing.T) {
 		}
 	}
 }
+
+// Coordinates and topology formats describe half a structure each. MVS pairs
+// them with a coordinates_ref that this job schema cannot express, so a job
+// using one alone compiled into a document Mol* rejected — surfacing as a
+// retryable renderer failure rather than the unsupported input it is.
+func TestValidateRejectsHalfStructureFormats(t *testing.T) {
+	for _, format := range []string{"xtc", "nctraj", "dcd", "trr"} {
+		err := Input{Path: "/tmp/x." + format}.Validate()
+		if err == nil {
+			t.Fatalf("coordinates format %q should be rejected", format)
+		}
+		if !strings.Contains(err.Error(), "coordinates only") {
+			t.Fatalf("error for %q should say it is coordinates only: %v", format, err)
+		}
+	}
+	for _, format := range []string{"psf", "prmtop", "top"} {
+		err := Input{Path: "/tmp/x." + format}.Validate()
+		if err == nil {
+			t.Fatalf("topology format %q should be rejected", format)
+		}
+		if !strings.Contains(err.Error(), "topology only") {
+			t.Fatalf("error for %q should say it is topology only: %v", format, err)
+		}
+	}
+	// Single-file structure formats keep working, including via an explicit
+	// format override.
+	for _, format := range []string{"mmcif", "bcif", "pdb", "gro", "xyz", "sdf", "mol2"} {
+		if err := (Input{Path: "/tmp/x." + format}).Validate(); err != nil {
+			t.Fatalf("format %q should validate: %v", format, err)
+		}
+		if err := (Input{Path: "/tmp/model", Format: format}).Validate(); err != nil {
+			t.Fatalf("explicit format %q should validate: %v", format, err)
+		}
+	}
+	// The rejection follows an explicit format override too.
+	if err := (Input{Path: "/tmp/model.pdb", Format: "xtc"}).Validate(); err == nil {
+		t.Fatal("an explicit coordinates format override should be rejected")
+	}
+}

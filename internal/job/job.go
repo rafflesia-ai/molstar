@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -260,6 +261,28 @@ func (input Input) Validate() error {
 		if err != nil || parsed.Scheme == "" {
 			return fmt.Errorf("url must be absolute: %q", input.URL)
 		}
+	}
+	if err := validateStandaloneFormat(input.ResolvedFormat()); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Coordinates and topology formats only describe half a structure: MVS pairs
+// them with a coordinates_ref, which this job schema has no way to express. A
+// job using one on its own compiled into an MVS document that Mol* rejected, and
+// the CLI reported that as a retryable renderer failure rather than the
+// unsupported input it is.
+var coordinatesOnlyFormats = []string{"xtc", "nctraj", "dcd", "trr"}
+var topologyOnlyFormats = []string{"psf", "prmtop", "top"}
+
+func validateStandaloneFormat(format string) error {
+	normalized := NormalizeFormat(format)
+	if slices.Contains(coordinatesOnlyFormats, normalized) {
+		return fmt.Errorf("format %q holds coordinates only and needs a matching topology, which this job schema cannot express; supply a single-file structure such as mmcif, bcif, pdb, or gro", normalized)
+	}
+	if slices.Contains(topologyOnlyFormats, normalized) {
+		return fmt.Errorf("format %q holds topology only and needs matching coordinates, which this job schema cannot express; supply a single-file structure such as mmcif, bcif, pdb, or gro", normalized)
 	}
 	return nil
 }

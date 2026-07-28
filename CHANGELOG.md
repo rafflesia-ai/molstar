@@ -28,6 +28,8 @@
 
 ### Fixed
 
+- Coordinates-only (`xtc`, `nctraj`, `dcd`, `trr`) and topology-only (`psf`, `prmtop`, `top`) inputs are rejected during validation. Each describes half a structure and MVS pairs them with a `coordinates_ref` that this job schema cannot express, so such a job compiled into a document Mol\* refused — reported as a retryable renderer failure rather than the unsupported input it is. Single-file structure formats, including `gro`, are unaffected.
+- A renderer worker that dies mid-request reports that it exited, instead of the bare `EOF` from the underlying pipe read, and classifies as a retryable `renderer_unavailable` — the pool respawns, so resubmitting usually succeeds.
 - A job whose only outputs are exports (`mvsj`, `mvsx`, `molj`) now succeeds. It wrote the artifact correctly and then failed with `no image or video outputs configured`, so a pipeline gating on the exit code discarded a good bundle. A job that produces nothing at all is still rejected.
 - `serve` explains why it could not listen. A `--socket` path over the ~104-byte `sun_path` limit — easy to hit under a CI temp directory — failed as a bare `bind: invalid argument`, and a taken port as `bind: address already in use`, with no suggested remedy.
 - `outputs[].transparent` actually renders a transparent background. The option is in the job schema, the Python client, and the OpenAPI schema, but was never passed to the renderer, so it silently produced a fully opaque image. Transparency is set on the image pass as well as the Canvas3D — the saved PNG comes from the image pass, so setting it on the canvas alone leaves the background opaque — and the persistent worker's plugin cache key now includes it.
