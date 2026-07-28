@@ -160,6 +160,10 @@ func (a app) runInspect(ctx context.Context, path string, flags *inspectFlags, c
 			if flags.strictSemantic {
 				return nil, markError(classifyError(err), err)
 			}
+			// Without this the degradation is invisible to anything reading the
+			// top-level report: ok stays true and warnings stays empty while the
+			// renderer-computed structure stats are silently missing.
+			appendInspectWarning(report, fmt.Sprintf("semantic inspection did not run: %v; re-run with --strict-semantic to make this fatal", err))
 		} else {
 			semantic["mode"] = semanticMode
 			semantic["command"] = command
@@ -167,6 +171,11 @@ func (a app) runInspect(ctx context.Context, path string, flags *inspectFlags, c
 		}
 	}
 	return report, nil
+}
+
+func appendInspectWarning(report map[string]any, warning string) {
+	existing, _ := report["warnings"].([]string)
+	report["warnings"] = append(existing, warning)
 }
 
 func normalizeInspectSemanticMode(value string) (string, error) {

@@ -48,6 +48,11 @@ type CommandResult struct {
 	Worker         bool             `json:"worker,omitempty"`
 	WorkerID       int              `json:"worker_id,omitempty"`
 	BadCells       []map[string]any `json:"bad_cells,omitempty"`
+
+	// RawStdout is the renderer's complete stdout. Stdout is truncated so a
+	// runaway process cannot bloat a report, which corrupts any structured
+	// payload larger than the limit; parse this instead. Never serialized.
+	RawStdout string `json:"-"`
 }
 
 func NewMolstar() Molstar {
@@ -89,7 +94,7 @@ func (m Molstar) InspectMVS(ctx context.Context, path string) (CommandResult, ma
 		return result, nil, err
 	}
 	var payload map[string]any
-	if err := json.Unmarshal([]byte(result.Stdout), &payload); err != nil {
+	if err := json.Unmarshal([]byte(result.stdoutForParsing()), &payload); err != nil {
 		return result, nil, fmt.Errorf("decode Mol* inspect JSON: %w", err)
 	}
 	return result, payload, nil
@@ -155,6 +160,7 @@ func (m Molstar) run(ctx context.Context, args []string) (CommandResult, error) 
 			ExitCode:   exitCode(err),
 			Stdout:     truncateForReport(stdout.String()),
 			Stderr:     truncateForReport(stderr.String()),
+			RawStdout:  stdout.String(),
 		}
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return result, ctxErr
@@ -168,7 +174,18 @@ func (m Molstar) run(ctx context.Context, args []string) (CommandResult, error) 
 		ExitCode:   0,
 		Stdout:     truncateForReport(stdout.String()),
 		Stderr:     truncateForReport(stderr.String()),
+		RawStdout:  stdout.String(),
 	}, nil
+}
+
+// stdoutForParsing returns the renderer's complete stdout, falling back to the
+// report-truncated copy for results that did not come from run (dry runs, tests,
+// and results decoded from a run log).
+func (r CommandResult) stdoutForParsing() string {
+	if r.RawStdout != "" {
+		return r.RawStdout
+	}
+	return r.Stdout
 }
 
 func exitCode(err error) int {

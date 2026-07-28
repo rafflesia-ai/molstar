@@ -28,6 +28,8 @@
 
 ### Fixed
 
+- `inspect --semantic` works on structures whose inspect payload exceeds 16 KiB. It parsed the report-truncated copy of the renderer's stdout, so anything larger than the truncation limit — 4HHB's payload is ~24 KB — failed to decode and returned no semantic stats at all. Reports still carry the truncated copy.
+- `inspect` records a top-level warning when semantic inspection fails in non-strict mode. The failure was only visible inside the nested `semantic` object, so `ok` stayed true and `warnings` stayed empty while the renderer-computed stats were silently missing.
 - `molstar fixtures verify --network` passes again. The three public recipe fixtures set `--out` and `--size` but not `sizeExplicit`, so the recipes' declared 1200x900 output size won and each fixture's own output verification then rejected the render for having the wrong dimensions.
 - The `surface` preset focuses the polymer instead of the ligand. A molecular surface is opaque, so framing a buried ligand put the camera inside the surface and produced an unreadable interior view rather than a surface. `examples/surface.recipe.yaml` follows.
 - `color: plddt` now renders with Mol\*'s AlphaFold `plddt-confidence` palette (orange = very low confidence, dark blue = very high). It mapped to the `uncertainty` theme, which colors high values red — AlphaFold stores pLDDT in the B-factor field, so every confidence render came out inverted, with folded domains red and disordered loops blue. The renderer now registers the model-archive quality-assessment behavior that provides the theme. `color: uncertainty` still selects the `uncertainty` theme.
