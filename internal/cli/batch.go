@@ -284,7 +284,8 @@ func (a app) runBatchJob(ctx context.Context, index int, j job.Job, flags *batch
 		report.Error = err.Error()
 		return report
 	}
-	report.Warnings = compiled.Warnings
+	report.Warnings = append(report.Warnings, runtimeReport.Warnings...)
+	report.Warnings = append(report.Warnings, compiled.Warnings...)
 	report.Themes = compiled.ThemeExtensions
 	for _, cached := range runtimeReport.CachedInputs {
 		report.Warnings = append(report.Warnings, fmt.Sprintf("cached %s -> %s", cached.Ref, cached.Path))

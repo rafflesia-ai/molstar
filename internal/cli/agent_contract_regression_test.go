@@ -219,6 +219,80 @@ func TestRenderReportFileCarriesRunID(t *testing.T) {
 	}
 }
 
+// Runtime warnings raised before scene compilation must survive into the
+// report. render --explain, batch, and inspect each assigned
+// `warnings = compiled.Warnings`, replacing rather than extending the list, so
+// anything reported by runtime preparation — such as a resource limit that could
+// not be enforced — was silently discarded.
+func TestCompileWarningsDoNotDiscardRuntimeWarnings(t *testing.T) {
+	dir := t.TempDir()
+	bcifPath := filepath.Join(dir, "model.bcif")
+	if err := os.WriteFile(bcifPath, []byte("not really bcif"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	network := false
+	j := job.Job{
+		Version: 1,
+		Runtime: job.Runtime{Network: &network, MaxAtoms: 1, AllowPaths: []string{dir}},
+		Inputs:  map[string]job.Input{"p": {Path: bcifPath, Format: "bcif"}},
+		Scene: job.Scene{Structures: []job.Structure{{
+			Ref:        "s",
+			Source:     "p",
+			Components: []job.Component{{Ref: "c", Select: "all", Representation: job.Representation{Type: "cartoon"}}},
+		}}},
+		Outputs: []job.Output{{Type: "image", Path: filepath.Join(dir, "out.png"), Size: []int{64, 48}}},
+	}
+	data, err := json.Marshal(j)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jobPath := filepath.Join(dir, "job.json")
+	if err := os.WriteFile(jobPath, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	hasLimitWarning := func(warnings []string) bool {
+		for _, warning := range warnings {
+			if strings.Contains(warning, "max_atoms") {
+				return true
+			}
+		}
+		return false
+	}
+
+	t.Run("render --explain", func(t *testing.T) {
+		stdout, _, err := runAppForTest(context.Background(), "render", jobPath, "--explain", "--json")
+		if err != nil {
+			t.Fatalf("explain failed: %v\n%s", err, stdout)
+		}
+		var report struct {
+			Warnings []string `json:"warnings"`
+		}
+		if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+			t.Fatal(err)
+		}
+		if !hasLimitWarning(report.Warnings) {
+			t.Fatalf("explain dropped the runtime warning: %#v", report.Warnings)
+		}
+	})
+
+	t.Run("inspect", func(t *testing.T) {
+		stdout, _, err := runAppForTest(context.Background(), "inspect", jobPath, "--semantic=false", "--json")
+		if err != nil {
+			t.Fatalf("inspect failed: %v\n%s", err, stdout)
+		}
+		var report struct {
+			Warnings []string `json:"warnings"`
+		}
+		if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+			t.Fatal(err)
+		}
+		if !hasLimitWarning(report.Warnings) {
+			t.Fatalf("inspect dropped the runtime warning: %#v", report.Warnings)
+		}
+	})
+}
+
 // Every server error response carries the standard envelope. Several handlers
 // answered with a bare {"ok":false,"error":"job not found"} string and unmatched
 // paths fell through to net/http's plain-text 404, so `error.agent_code` — which

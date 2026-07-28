@@ -122,13 +122,18 @@ func (a app) runInspect(ctx context.Context, path string, flags *inspectFlags, c
 		}
 		j = prepared
 		report["cached_inputs"] = runtimeReport.CachedInputs
+		for _, warning := range runtimeReport.Warnings {
+			appendInspectWarning(report, warning)
+		}
 	}
 	inspectJob := jobWithInspectRefs(j, flags.selector)
 	compiled, err := mvs.Compile(inspectJob)
 	if err != nil {
 		return nil, markError(kindInvalidScene, err)
 	}
-	report["warnings"] = compiled.Warnings
+	for _, warning := range compiled.Warnings {
+		appendInspectWarning(report, warning)
+	}
 	report["themes"] = compiled.ThemeExtensions
 	report["components"] = inspectComponents(j, flags.selector)
 	if semanticMode != "false" {

@@ -155,7 +155,39 @@ const { loadMVS } = require('molstar/lib/commonjs/extensions/mvs/load.js');
 const { MVSData } = require('molstar/lib/commonjs/extensions/mvs/mvs-data.js');
 const { createMVSRefMap } = require('molstar/lib/commonjs/extensions/mvs/util.js');
 
-setFSModule(fs);
+// Mol*'s Node file:// reader turns a URL into a filename with a bare
+// `url.substring('file://'.length)`, so it never percent-decodes. A local input
+// under a path containing a space, a non-ASCII character, or a parenthesis is
+// written as a correctly-escaped RFC 8089 URL and then fails to open with
+// ENOENT. Decode on the fallback so those paths load, while a path that really
+// does contain a "%" keeps working.
+const fsWithPercentDecodedPaths = {
+  ...fs,
+  readFile(filePath, ...rest) {
+    const callback = rest[rest.length - 1];
+    if (typeof filePath !== 'string' || typeof callback !== 'function' || !filePath.includes('%')) {
+      return fs.readFile(filePath, ...rest);
+    }
+    let decoded = filePath;
+    try {
+      decoded = decodeURIComponent(filePath);
+    } catch {
+      return fs.readFile(filePath, ...rest);
+    }
+    if (decoded === filePath) return fs.readFile(filePath, ...rest);
+    return fs.readFile(filePath, ...rest.slice(0, -1), (error, data) => {
+      if (!error) return callback(error, data);
+      fs.readFile(decoded, ...rest.slice(0, -1), (fallbackError, fallbackData) => {
+        // Report the original error when the decoded path is no better, so the
+        // message still names the path Mol* was actually given.
+        if (fallbackError) return callback(error, undefined);
+        callback(null, fallbackData);
+      });
+    });
+  },
+};
+
+setFSModule(fsWithPercentDecodedPaths);
 setCanvasModule(canvas);
 
 function parseArgs(argv) {

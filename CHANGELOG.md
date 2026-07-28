@@ -28,6 +28,9 @@
 
 ### Fixed
 
+- Local inputs under a path containing a space, a non-ASCII character, or a parenthesis now render. Those paths are handed to the renderer as correctly percent-escaped RFC 8089 `file://` URLs, but Mol\*'s Node file reader strips the scheme without decoding, so an ordinary path such as `~/Desktop/my project/model.pdb` failed with `ENOENT` and surfaced as `renderer_unavailable`.
+- `runtime.max_atoms` reports when it could not be enforced. Atom counts are unavailable for BinaryCIF and trajectory formats, and BinaryCIF is what every `pdbe`/`rcsb` identifier resolves to, so the limit silently did not bind on the most common input path — including under the `locked` and `ci` profiles that set it.
+- `render --explain`, `batch`, and `inspect` no longer discard runtime warnings. Each replaced the accumulated warning list with the scene-compilation warnings instead of extending it, so anything reported during runtime preparation was dropped from the report.
 - Every HTTP server error response now carries the standard `{ok, command, error{code, agent_code, message, retryable, exit_code, diagnosis}, timestamp}` envelope. Job/output 404s and 405s answered with a bare `{"ok":false,"error":"job not found"}` string, and unmatched paths fell through to net/http's plain-text `404 page not found`, so `error.agent_code` was missing exactly when a request had failed.
 - The `serve --openapi` error schema documents `agent_code`, `retryable`, and `exit_code`. It listed only `code`, `message`, and `diagnosis`, omitting the classifier `docs/json-contracts.md` tells agents to branch on.
 - All retention flags accept the same duration syntax. `logs prune --older-than` accepted days (`14d`) while `cache prune --older-than`, `jobs prune --ttl`, and `serve --job-ttl` rejected them with `time: unknown unit "d"`; they now share one parser and one error message.

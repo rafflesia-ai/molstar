@@ -240,6 +240,7 @@ func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cm
 			return markError(kindRuntime, err)
 		}
 		report.CachedInputs = runtimeReport.CachedInputs
+		report.Warnings = append(report.Warnings, runtimeReport.Warnings...)
 		scenePath, cleanup, outputs, stateOut, err = a.compileJobForRender(j, flags, stateOut, &report)
 		if err != nil {
 			return err
@@ -275,6 +276,7 @@ func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cm
 				return markError(kindRuntime, err)
 			}
 			report.CachedInputs = runtimeReport.CachedInputs
+			report.Warnings = append(report.Warnings, runtimeReport.Warnings...)
 			scenePath, cleanup, outputs, stateOut, err = a.compileJobForRender(j, flags, stateOut, &report)
 			if err != nil {
 				return err
@@ -306,6 +308,7 @@ func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cm
 			return markError(kindRuntime, err)
 		}
 		report.CachedInputs = runtimeReport.CachedInputs
+		report.Warnings = append(report.Warnings, runtimeReport.Warnings...)
 		scenePath, cleanup, outputs, stateOut, err = a.compileJobForRender(j, flags, stateOut, &report)
 		if err != nil {
 			return err
@@ -484,7 +487,8 @@ func explainPreparedJob(ctx context.Context, kind string, j job.Job, report rend
 	report.Inputs = prepared.Inputs
 	report.Outputs = prepared.Outputs
 	report.CachedInputs = runtimeReport.CachedInputs
-	report.Warnings = compiled.Warnings
+	report.Warnings = append(report.Warnings, runtimeReport.Warnings...)
+	report.Warnings = append(report.Warnings, compiled.Warnings...)
 	report.MVSNodeCount = countMVSNodes(compiled.Document.Root)
 	if len(prepared.Scene.Structures) > 0 {
 		report.Components = prepared.Scene.Structures[0].Components

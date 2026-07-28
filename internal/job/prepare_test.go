@@ -222,3 +222,68 @@ func TestJSONSchemaCanMarshal(t *testing.T) {
 		t.Fatal("schema is empty")
 	}
 }
+
+// max_atoms cannot be checked for BinaryCIF and trajectory formats without a
+// full parser, and BinaryCIF is what every pdbe/rcsb identifier resolves to. The
+// limit therefore did not bind on the most common input path, silently, so an
+// operator running the `locked` profile believed they were protected when they
+// were not. The skip is now reported.
+func TestAtomLimitReportsWhenItCannotBeEnforced(t *testing.T) {
+	dir := t.TempDir()
+	pdbPath := filepath.Join(dir, "two.pdb")
+	pdb := "ATOM      1  CA  ALA A   1      11.000  12.000  13.000  1.00  0.00           C\n" +
+		"ATOM      2  CB  ALA A   1      12.000  13.000  14.000  1.00  0.00           C\n"
+	if err := os.WriteFile(pdbPath, []byte(pdb), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	bcifPath := filepath.Join(dir, "model.bcif")
+	if err := os.WriteFile(bcifPath, []byte("not really bcif"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("countable format still enforces", func(t *testing.T) {
+		j := Job{
+			Version: 1,
+			Runtime: Runtime{Network: boolPtr(false), MaxAtoms: 1, AllowPaths: []string{dir}},
+			Inputs:  map[string]Input{"p": {Path: pdbPath, Format: "pdb"}},
+		}
+		if _, _, err := PrepareRuntime(context.Background(), j); err == nil {
+			t.Fatal("expected the atom limit to reject a 2-atom structure with max_atoms=1")
+		}
+	})
+
+	t.Run("uncountable format warns instead of silently passing", func(t *testing.T) {
+		j := Job{
+			Version: 1,
+			Runtime: Runtime{Network: boolPtr(false), MaxAtoms: 1, AllowPaths: []string{dir}},
+			Inputs:  map[string]Input{"p": {Path: bcifPath, Format: "bcif"}},
+		}
+		_, report, err := PrepareRuntime(context.Background(), j)
+		if err != nil {
+			t.Fatalf("bcif input should not fail preparation: %v", err)
+		}
+		if len(report.Warnings) != 1 {
+			t.Fatalf("expected one skipped-limit warning, got %#v", report.Warnings)
+		}
+		if !strings.Contains(report.Warnings[0], "max_atoms") || !strings.Contains(report.Warnings[0], "bcif") {
+			t.Fatalf("warning should name the limit and the format: %q", report.Warnings[0])
+		}
+	})
+
+	t.Run("no limit set produces no warning", func(t *testing.T) {
+		j := Job{
+			Version: 1,
+			Runtime: Runtime{Network: boolPtr(false), AllowPaths: []string{dir}},
+			Inputs:  map[string]Input{"p": {Path: bcifPath, Format: "bcif"}},
+		}
+		_, report, err := PrepareRuntime(context.Background(), j)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(report.Warnings) != 0 {
+			t.Fatalf("expected no warnings without max_atoms, got %#v", report.Warnings)
+		}
+	})
+}
+
+func boolPtr(v bool) *bool { return &v }

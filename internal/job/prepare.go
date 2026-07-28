@@ -22,6 +22,10 @@ const defaultMaxArchiveBytes int64 = 512 * 1024 * 1024
 
 type RuntimeReport struct {
 	CachedInputs []CachedInput `json:"cached_inputs,omitempty"`
+	// Warnings records runtime policy that could not be applied. A limit that
+	// silently does not bind is worse than no limit, because the operator
+	// believes they are protected.
+	Warnings []string `json:"warnings,omitempty"`
 }
 
 type CachedInput struct {
@@ -56,8 +60,14 @@ func PrepareRuntime(ctx context.Context, j Job) (Job, RuntimeReport, error) {
 			return Job{}, RuntimeReport{}, fmt.Errorf("input %q: %w", ref, err)
 		}
 		if !input.RequiresNetwork() {
-			if err := EnforceAtomLimit(input, j.Runtime); err != nil {
+			applied, err := checkAtomLimit(input, j.Runtime)
+			if err != nil {
 				return Job{}, RuntimeReport{}, fmt.Errorf("input %q: %w", ref, err)
+			}
+			if !applied {
+				if warning := atomLimitSkippedWarning(ref, input, j.Runtime); warning != "" {
+					report.Warnings = append(report.Warnings, warning)
+				}
 			}
 			continue
 		}
@@ -96,8 +106,14 @@ func PrepareRuntime(ctx context.Context, j Job) (Job, RuntimeReport, error) {
 		input.Path = cachePath
 		input.Format = format
 		j.Inputs[ref] = input
-		if err := EnforceAtomLimit(input, j.Runtime); err != nil {
+		applied, err := checkAtomLimit(input, j.Runtime)
+		if err != nil {
 			return Job{}, RuntimeReport{}, fmt.Errorf("input %q: %w", ref, err)
+		}
+		if !applied {
+			if warning := atomLimitSkippedWarning(ref, input, j.Runtime); warning != "" {
+				report.Warnings = append(report.Warnings, warning)
+			}
 		}
 		report.CachedInputs = append(report.CachedInputs, CachedInput{
 			Ref:    ref,
@@ -116,24 +132,43 @@ func PrepareRuntime(ctx context.Context, j Job) (Job, RuntimeReport, error) {
 }
 
 func EnforceAtomLimit(input Input, runtime Runtime) error {
+	_, err := checkAtomLimit(input, runtime)
+	return err
+}
+
+// checkAtomLimit reports whether the limit was actually applied. Formats whose
+// atoms cannot be counted without a full parser — BinaryCIF and the trajectory
+// formats — skip the check, and BinaryCIF is what every pdbe/rcsb identifier
+// fetch resolves to, so the limit silently did not bind on the most common
+// input path. Callers surface the skip instead of leaving it invisible.
+func checkAtomLimit(input Input, runtime Runtime) (applied bool, err error) {
 	if runtime.MaxAtoms <= 0 {
-		return nil
+		return false, nil
 	}
 	path := input.LocalPath()
 	if strings.TrimSpace(path) == "" {
-		return nil
+		return false, nil
 	}
-	count, counted, err := CountAtomsFile(path, input.ResolvedFormat())
+	format := input.ResolvedFormat()
+	count, counted, err := CountAtomsFile(path, format)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if !counted {
-		return nil
+		return false, nil
 	}
 	if count > runtime.MaxAtoms {
-		return fmt.Errorf("atom count %d exceeds runtime.max_atoms=%d", count, runtime.MaxAtoms)
+		return true, fmt.Errorf("atom count %d exceeds runtime.max_atoms=%d", count, runtime.MaxAtoms)
 	}
-	return nil
+	return true, nil
+}
+
+func atomLimitSkippedWarning(ref string, input Input, runtime Runtime) string {
+	if runtime.MaxAtoms <= 0 {
+		return ""
+	}
+	format := NormalizeFormat(input.ResolvedFormat())
+	return fmt.Sprintf("input %q: runtime.max_atoms=%d was not enforced because %s atom counts are not available without rendering", ref, runtime.MaxAtoms, format)
 }
 
 func CountAtomsFile(path string, format string) (int, bool, error) {
