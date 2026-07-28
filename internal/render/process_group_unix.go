@@ -6,6 +6,7 @@ import (
 	"context"
 	"os/exec"
 	"syscall"
+	"time"
 )
 
 // runCommandWithContext runs cmd in its own process group and, on cancellation
@@ -27,10 +28,21 @@ func runCommandWithContext(ctx context.Context, cmd *exec.Cmd) error {
 		return err
 	case <-ctx.Done():
 		killProcessGroup(cmd)
-		<-done
+		// Wait for the reaped process, but never block on it forever: cmd.Wait
+		// also waits for the stdout/stderr copies to finish, and anything still
+		// holding those pipes would hang the caller — which is the failure this
+		// function exists to prevent.
+		select {
+		case <-done:
+		case <-time.After(waitAfterKill):
+		}
 		return ctx.Err()
 	}
 }
+
+// waitAfterKill bounds how long a canceled command may take to reap after its
+// process group is killed.
+const waitAfterKill = 5 * time.Second
 
 func killProcessGroup(cmd *exec.Cmd) {
 	if cmd.Process == nil {

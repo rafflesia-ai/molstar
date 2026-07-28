@@ -202,7 +202,7 @@ func (a app) cachePruneCommand() *cobra.Command {
 				}
 				duration := time.Duration(0)
 				if olderThan != "" {
-					parsed, err := time.ParseDuration(olderThan)
+					parsed, err := parseRetentionDuration(olderThan)
 					if err != nil {
 						return markError(kindInvalidInput, err)
 					}
@@ -227,7 +227,7 @@ func (a app) cachePruneCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&cacheDir, "cache", ".molstar-cache", "cache directory")
-	cmd.Flags().StringVar(&olderThan, "older-than", "", "only prune entries older than a duration such as 720h")
+	cmd.Flags().StringVar(&olderThan, "older-than", "", "only prune entries older than this age, e.g. 30d, 720h")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "print what would be removed")
 	cmd.Flags().BoolVar(&jsonReport, "json", false, "write JSON report")
 	return cmd

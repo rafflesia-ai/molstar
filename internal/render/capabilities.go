@@ -3,6 +3,7 @@ package render
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os/exec"
 	"time"
@@ -37,7 +38,15 @@ func (m Molstar) Capabilities(ctx context.Context) CapabilitiesReport {
 		if exit, ok := err.(*exec.ExitError); ok {
 			result.Stderr = truncateForReport(string(exit.Stderr))
 		}
-		return CapabilitiesReport{OK: false, Command: result, Error: err.Error(), StartedAt: result.StartedAt}
+		message := err.Error()
+		// A probe killed by the deadline surfaces as "signal: killed", which says
+		// nothing about what happened or what to do. Name the timeout instead.
+		if ctxErr := ctx.Err(); errors.Is(ctxErr, context.DeadlineExceeded) {
+			message = fmt.Sprintf("renderer capability probe timed out after %dms; raise --timeout if the renderer is just slow to start", result.DurationMS)
+		} else if errors.Is(ctxErr, context.Canceled) {
+			message = "renderer capability probe was canceled"
+		}
+		return CapabilitiesReport{OK: false, Command: result, Error: message, StartedAt: result.StartedAt}
 	}
 	result.ExitCode = 0
 	result.Stdout = truncateForReport(string(output))

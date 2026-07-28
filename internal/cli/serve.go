@@ -75,7 +75,7 @@ func (a app) serveCommand() *cobra.Command {
 	cmd.Flags().StringVar(&flags.rendererCommand, "renderer-command", "", "renderer command override")
 	cmd.Flags().StringVar(&flags.workerCommand, "worker-command", "", "persistent renderer worker command override")
 	cmd.Flags().StringVar(&flags.jobStore, "job-store", "", "directory for persisted async job records")
-	cmd.Flags().StringVar(&flags.jobTTL, "job-ttl", "", "prune persisted job records older than this duration on startup, e.g. 24h")
+	cmd.Flags().StringVar(&flags.jobTTL, "job-ttl", "", "prune persisted job records older than this age on startup, e.g. 7d, 24h")
 	cmd.Flags().StringVar(&flags.authToken, "auth-token", "", "protect non-health HTTP endpoints with this bearer token; also supports MOLSTAR_AUTH_TOKEN")
 	cmd.Flags().BoolVar(&flags.openapi, "openapi", false, "write the HTTP OpenAPI schema to stdout and exit")
 	cmd.Flags().BoolVar(&flags.prewarm, "prewarm", false, "start the renderer and run a tiny local render probe before accepting traffic")
@@ -95,7 +95,7 @@ func (a app) runServe(ctx context.Context, flags *serveFlags, cmd *cobra.Command
 			return markError(kindRuntime, err)
 		}
 		if strings.TrimSpace(flags.jobTTL) != "" {
-			ttl, err := time.ParseDuration(flags.jobTTL)
+			ttl, err := parseRetentionDuration(flags.jobTTL)
 			if err != nil {
 				return markError(kindInvalidInput, err)
 			}
@@ -203,6 +203,12 @@ func (a app) serveHandler(flags *serveFlags, cmd *cobra.Command) http.Handler {
 
 func (a app) serveMux(flags *serveFlags, cmd *cobra.Command, gate *renderGate, store *renderJobStore) http.Handler {
 	mux := http.NewServeMux()
+	// Unmatched paths otherwise fall through to net/http's plain-text
+	// "404 page not found", the one response on this server that is not JSON.
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		writeHTTPErrorStatus(w, "serve", http.StatusNotFound,
+			markError(kindInvalidInput, fmt.Errorf("no such endpoint %q; see `molstar serve --openapi` for the available paths", r.URL.Path)))
+	})
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		if !requireMethod(w, r, http.MethodGet) {
 			return
@@ -350,19 +356,19 @@ func (a app) serveMux(flags *serveFlags, cmd *cobra.Command, gate *renderGate, s
 		clean := strings.Trim(path.Clean(strings.TrimPrefix(r.URL.Path, "/jobs/")), "/")
 		parts := strings.Split(clean, "/")
 		if clean == "" || len(parts) > 3 {
-			writeHTTPJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "job not found"})
+			writeHTTPErrorStatus(w, "jobs", http.StatusNotFound, markError(kindInvalidInput, errors.New("job not found")))
 			return
 		}
 		current := store.get(parts[0])
 		if current == nil {
-			writeHTTPJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "job not found"})
+			writeHTTPErrorStatus(w, "jobs", http.StatusNotFound, markError(kindInvalidInput, errors.New("job not found")))
 			return
 		}
 		if len(parts) >= 2 {
 			switch parts[1] {
 			case "events":
 				if len(parts) != 2 {
-					writeHTTPJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "job not found"})
+					writeHTTPErrorStatus(w, "jobs", http.StatusNotFound, markError(kindInvalidInput, errors.New("job not found")))
 					return
 				}
 				if !requireMethod(w, r, http.MethodGet) {
@@ -381,7 +387,7 @@ func (a app) serveMux(flags *serveFlags, cmd *cobra.Command, gate *renderGate, s
 				writeHTTPOutput(w, current, parts[2])
 				return
 			default:
-				writeHTTPJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "job not found"})
+				writeHTTPErrorStatus(w, "jobs", http.StatusNotFound, markError(kindInvalidInput, errors.New("job not found")))
 				return
 			}
 		}
@@ -393,7 +399,7 @@ func (a app) serveMux(flags *serveFlags, cmd *cobra.Command, gate *renderGate, s
 			writeHTTPJSON(w, http.StatusAccepted, current.snapshot())
 		default:
 			w.Header().Set("Allow", "GET, DELETE")
-			writeHTTPJSON(w, http.StatusMethodNotAllowed, map[string]any{"ok": false, "error": "method not allowed"})
+			writeHTTPErrorStatus(w, "jobs", http.StatusMethodNotAllowed, markError(kindInvalidInput, errors.New("method not allowed")))
 		}
 	})
 	return authHTTPHandler(flags, mux)
@@ -1113,24 +1119,24 @@ func (j *serverRenderJob) outputFiles() []outputReport {
 func writeHTTPOutput(w http.ResponseWriter, current *serverRenderJob, indexValue string) {
 	index, err := strconv.Atoi(indexValue)
 	if err != nil || index < 0 {
-		writeHTTPJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "output not found"})
+		writeHTTPErrorStatus(w, "jobs outputs", http.StatusNotFound, markError(kindInvalidInput, errors.New("output not found")))
 		return
 	}
 	outputs := current.outputFiles()
 	if index >= len(outputs) {
-		writeHTTPJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "output not found"})
+		writeHTTPErrorStatus(w, "jobs outputs", http.StatusNotFound, markError(kindInvalidInput, errors.New("output not found")))
 		return
 	}
 	output := outputs[index]
 	file, err := os.Open(output.Path)
 	if err != nil {
-		writeHTTPJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": err.Error()})
+		writeHTTPErrorStatus(w, "jobs outputs", http.StatusNotFound, markError(kindInvalidInput, err))
 		return
 	}
 	defer file.Close()
 	info, err := file.Stat()
 	if err != nil || info.IsDir() {
-		writeHTTPJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "output not found"})
+		writeHTTPErrorStatus(w, "jobs outputs", http.StatusNotFound, markError(kindInvalidInput, errors.New("output not found")))
 		return
 	}
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filepath.Base(output.Path)))
@@ -1550,10 +1556,8 @@ func requireMethod(w http.ResponseWriter, r *http.Request, method string) bool {
 		return true
 	}
 	w.Header().Set("Allow", method)
-	writeHTTPJSON(w, http.StatusMethodNotAllowed, map[string]any{
-		"ok":    false,
-		"error": "method not allowed",
-	})
+	writeHTTPErrorStatus(w, "serve", http.StatusMethodNotAllowed,
+		markError(kindInvalidInput, fmt.Errorf("method %s not allowed; use %s", r.Method, method)))
 	return false
 }
 
@@ -1619,7 +1623,17 @@ func writeHTTPEvents(w http.ResponseWriter, r *http.Request, current *serverRend
 }
 
 func writeHTTPError(w http.ResponseWriter, command string, err error) {
-	writeHTTPJSON(w, statusForError(err), errorReport{
+	writeHTTPErrorStatus(w, command, statusForError(err), err)
+}
+
+// writeHTTPErrorStatus writes the standard error envelope with an explicit HTTP
+// status, for cases the error kind alone does not determine (a missing job is
+// invalid input, but 404 rather than 400). Every server error response uses this
+// shape: several handlers used to answer with a bare {"ok":false,"error":"..."}
+// string, so `error.agent_code` — which the OpenAPI schema documents and agents
+// are told to branch on — was absent exactly when a request had failed.
+func writeHTTPErrorStatus(w http.ResponseWriter, command string, status int, err error) {
+	writeHTTPJSON(w, status, errorReport{
 		OK:        false,
 		Command:   command,
 		Error:     newErrorBody(err),

@@ -219,6 +219,95 @@ func TestRenderReportFileCarriesRunID(t *testing.T) {
 	}
 }
 
+// Every server error response carries the standard envelope. Several handlers
+// answered with a bare {"ok":false,"error":"job not found"} string and unmatched
+// paths fell through to net/http's plain-text 404, so `error.agent_code` — which
+// the OpenAPI schema documents and agents are told to branch on — was missing
+// exactly when a request had failed.
+func TestServerErrorsAlwaysCarryTheStandardEnvelope(t *testing.T) {
+	a := app{stdout: io.Discard, stderr: io.Discard}
+	cmd := a.serveCommand()
+	handler := a.serveHandler(&serveFlags{dryRun: true}, cmd)
+
+	cases := []struct {
+		name   string
+		method string
+		path   string
+		status int
+	}{
+		{"unknown job", http.MethodGet, "/jobs/does-not-exist", http.StatusNotFound},
+		{"unknown job outputs", http.MethodGet, "/jobs/does-not-exist/outputs/0", http.StatusNotFound},
+		{"unknown endpoint", http.MethodGet, "/no-such-endpoint", http.StatusNotFound},
+		{"wrong method", http.MethodPost, "/health", http.StatusMethodNotAllowed},
+	}
+	for _, tc := range cases {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(tc.method, tc.path, nil))
+		if response.Code != tc.status {
+			t.Fatalf("%s: status = %d, want %d", tc.name, response.Code, tc.status)
+		}
+		if got := response.Header().Get("Content-Type"); !strings.Contains(got, "application/json") {
+			t.Fatalf("%s: content-type = %q, want JSON", tc.name, got)
+		}
+		var body struct {
+			OK    bool `json:"ok"`
+			Error struct {
+				Code      string `json:"code"`
+				AgentCode string `json:"agent_code"`
+				Message   string `json:"message"`
+			} `json:"error"`
+		}
+		if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+			t.Fatalf("%s: response is not the standard envelope: %v\n%s", tc.name, err, response.Body.String())
+		}
+		if body.OK {
+			t.Fatalf("%s: ok should be false", tc.name)
+		}
+		if body.Error.AgentCode == "" || body.Error.Code == "" || body.Error.Message == "" {
+			t.Fatalf("%s: incomplete error body: %+v", tc.name, body.Error)
+		}
+	}
+}
+
+// Every retention flag takes the same duration syntax. `logs prune
+// --older-than` accepted "14d" while `cache prune --older-than` and `jobs prune
+// --ttl` rejected it with "time: unknown unit \"d\"", so the same value worked
+// or failed depending on which subcommand you were in.
+func TestRetentionDurationsAcceptDaysEverywhere(t *testing.T) {
+	cases := map[string]time.Duration{
+		"7d":   7 * 24 * time.Hour,
+		"14d":  14 * 24 * time.Hour,
+		"168h": 168 * time.Hour,
+		"30m":  30 * time.Minute,
+		" 2d ": 2 * 24 * time.Hour,
+	}
+	for value, want := range cases {
+		got, err := parseRetentionDuration(value)
+		if err != nil {
+			t.Fatalf("parseRetentionDuration(%q) failed: %v", value, err)
+		}
+		if got != want {
+			t.Fatalf("parseRetentionDuration(%q) = %v, want %v", value, got, want)
+		}
+	}
+	for _, value := range []string{"bogus", "7x", "", "d"} {
+		if _, err := parseRetentionDuration(value); err == nil {
+			t.Fatalf("parseRetentionDuration(%q) should fail", value)
+		}
+	}
+
+	// The retention flags all route through the shared parser.
+	for _, args := range [][]string{
+		{"logs", "prune", "--older-than", "7d", "--dry-run", "--json"},
+		{"cache", "prune", "--older-than", "7d", "--dry-run", "--json"},
+		{"jobs", "prune", "--ttl", "7d", "--dry-run", "--json"},
+	} {
+		if _, _, err := runAppForTest(context.Background(), args...); err != nil {
+			t.Fatalf("%v rejected a days-based retention value: %v", args, err)
+		}
+	}
+}
+
 // GET /jobs/{id}/events must follow a running job to its terminal phase. It
 // wrote a one-shot snapshot of the events recorded so far, so the documented
 // async flow — submit, then stream events — closed the stream while the job was

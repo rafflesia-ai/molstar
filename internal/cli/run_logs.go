@@ -1382,17 +1382,29 @@ func pruneRunLogs(dir string, cutoff time.Time, dryRun bool) ([]string, error) {
 	return removed, nil
 }
 
-func parseRunLogAge(value string) (time.Duration, error) {
-	value = strings.TrimSpace(value)
-	if strings.HasSuffix(value, "d") {
-		days := strings.TrimSuffix(value, "d")
+// parseRetentionDuration parses a retention age. It extends Go's duration
+// syntax with a "d" (days) suffix, because every retention flag in the CLI is
+// naturally expressed in days. All of them share this parser: `logs prune`
+// accepted "14d" while `cache prune --older-than` and `jobs prune --ttl`
+// rejected it, so the same value worked or failed depending on the subcommand.
+func parseRetentionDuration(value string) (time.Duration, error) {
+	trimmed := strings.TrimSpace(value)
+	if days, ok := strings.CutSuffix(trimmed, "d"); ok {
 		parsed, err := time.ParseDuration(days + "h")
 		if err != nil {
-			return 0, err
+			return 0, fmt.Errorf("invalid duration %q: use a value such as 14d or 48h", value)
 		}
 		return parsed * 24, nil
 	}
-	return time.ParseDuration(value)
+	parsed, err := time.ParseDuration(trimmed)
+	if err != nil {
+		return 0, fmt.Errorf("invalid duration %q: use a value such as 14d or 48h", value)
+	}
+	return parsed, nil
+}
+
+func parseRunLogAge(value string) (time.Duration, error) {
+	return parseRetentionDuration(value)
 }
 
 func runLogDir(dir string) string {

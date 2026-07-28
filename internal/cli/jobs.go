@@ -42,9 +42,9 @@ func (a app) jobsPruneCommand() *cobra.Command {
 				if strings.TrimSpace(jobStore) == "" {
 					return markError(kindInvalidInput, fmt.Errorf("--job-store is required"))
 				}
-				ttl, err := time.ParseDuration(ttlText)
+				ttl, err := parseRetentionDuration(ttlText)
 				if err != nil || ttl <= 0 {
-					return markError(kindInvalidInput, fmt.Errorf("--ttl must be a positive duration such as 24h"))
+					return markError(kindInvalidInput, fmt.Errorf("--ttl must be a positive duration such as 7d or 24h"))
 				}
 				removed, err := pruneJobStore(jobStore, ttl, time.Now(), dryRun)
 				if err != nil {
@@ -65,7 +65,7 @@ func (a app) jobsPruneCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&jobStore, "job-store", ".molstar-jobs", "persisted job store directory")
-	cmd.Flags().StringVar(&ttlText, "ttl", "24h", "remove jobs older than this duration")
+	cmd.Flags().StringVar(&ttlText, "ttl", "24h", "remove jobs older than this age, e.g. 7d, 24h")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "print records without removing them")
 	cmd.Flags().BoolVar(&jsonReport, "json", false, "write JSON report")
 	return cmd

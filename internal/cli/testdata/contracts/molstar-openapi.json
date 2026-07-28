@@ -104,9 +104,17 @@
         },
         "Error": {
           "properties": {
+            "command": {
+              "type": "<string>"
+            },
             "error": {
               "properties": {
+                "agent_code": {
+                  "description": "<string>",
+                  "type": "<string>"
+                },
                 "code": {
+                  "description": "<string>",
                   "type": "<string>"
                 },
                 "diagnosis": {
@@ -115,10 +123,24 @@
                   },
                   "type": "<string>"
                 },
+                "exit_code": {
+                  "description": "<string>",
+                  "type": "<string>"
+                },
                 "message": {
+                  "type": "<string>"
+                },
+                "retryable": {
+                  "description": "<string>",
                   "type": "<string>"
                 }
               },
+              "required": [
+                "<string>",
+                "<string>",
+                "<string>",
+                "<string>"
+              ],
               "type": "<string>"
             },
             "ok": {
@@ -129,6 +151,10 @@
               "type": "<string>"
             }
           },
+          "required": [
+            "<string>",
+            "<string>"
+          ],
           "type": "<string>"
         },
         "Job": {
@@ -609,9 +635,17 @@
                 "application/json": {
                   "schema": {
                     "properties": {
+                      "command": {
+                        "type": "<string>"
+                      },
                       "error": {
                         "properties": {
+                          "agent_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "code": {
+                            "description": "<string>",
                             "type": "<string>"
                           },
                           "diagnosis": {
@@ -620,10 +654,24 @@
                             },
                             "type": "<string>"
                           },
+                          "exit_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "message": {
+                            "type": "<string>"
+                          },
+                          "retryable": {
+                            "description": "<string>",
                             "type": "<string>"
                           }
                         },
+                        "required": [
+                          "<string>",
+                          "<string>",
+                          "<string>",
+                          "<string>"
+                        ],
                         "type": "<string>"
                       },
                       "ok": {
@@ -634,6 +682,10 @@
                         "type": "<string>"
                       }
                     },
+                    "required": [
+                      "<string>",
+                      "<string>"
+                    ],
                     "type": "<string>"
                   }
                 }
@@ -683,9 +735,17 @@
                 "application/json": {
                   "schema": {
                     "properties": {
+                      "command": {
+                        "type": "<string>"
+                      },
                       "error": {
                         "properties": {
+                          "agent_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "code": {
+                            "description": "<string>",
                             "type": "<string>"
                           },
                           "diagnosis": {
@@ -694,10 +754,24 @@
                             },
                             "type": "<string>"
                           },
+                          "exit_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "message": {
+                            "type": "<string>"
+                          },
+                          "retryable": {
+                            "description": "<string>",
                             "type": "<string>"
                           }
                         },
+                        "required": [
+                          "<string>",
+                          "<string>",
+                          "<string>",
+                          "<string>"
+                        ],
                         "type": "<string>"
                       },
                       "ok": {
@@ -708,6 +782,10 @@
                         "type": "<string>"
                       }
                     },
+                    "required": [
+                      "<string>",
+                      "<string>"
+                    ],
                     "type": "<string>"
                   }
                 }
@@ -736,9 +814,17 @@
                 "application/json": {
                   "schema": {
                     "properties": {
+                      "command": {
+                        "type": "<string>"
+                      },
                       "error": {
                         "properties": {
+                          "agent_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "code": {
+                            "description": "<string>",
                             "type": "<string>"
                           },
                           "diagnosis": {
@@ -747,10 +833,24 @@
                             },
                             "type": "<string>"
                           },
+                          "exit_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "message": {
+                            "type": "<string>"
+                          },
+                          "retryable": {
+                            "description": "<string>",
                             "type": "<string>"
                           }
                         },
+                        "required": [
+                          "<string>",
+                          "<string>",
+                          "<string>",
+                          "<string>"
+                        ],
                         "type": "<string>"
                       },
                       "ok": {
@@ -761,6 +861,10 @@
                         "type": "<string>"
                       }
                     },
+                    "required": [
+                      "<string>",
+                      "<string>"
+                    ],
                     "type": "<string>"
                   }
                 }
@@ -791,9 +895,17 @@
                 "application/json": {
                   "schema": {
                     "properties": {
+                      "command": {
+                        "type": "<string>"
+                      },
                       "error": {
                         "properties": {
+                          "agent_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "code": {
+                            "description": "<string>",
                             "type": "<string>"
                           },
                           "diagnosis": {
@@ -802,10 +914,24 @@
                             },
                             "type": "<string>"
                           },
+                          "exit_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "message": {
+                            "type": "<string>"
+                          },
+                          "retryable": {
+                            "description": "<string>",
                             "type": "<string>"
                           }
                         },
+                        "required": [
+                          "<string>",
+                          "<string>",
+                          "<string>",
+                          "<string>"
+                        ],
                         "type": "<string>"
                       },
                       "ok": {
@@ -816,6 +942,10 @@
                         "type": "<string>"
                       }
                     },
+                    "required": [
+                      "<string>",
+                      "<string>"
+                    ],
                     "type": "<string>"
                   }
                 }
@@ -846,9 +976,17 @@
                 "application/json": {
                   "schema": {
                     "properties": {
+                      "command": {
+                        "type": "<string>"
+                      },
                       "error": {
                         "properties": {
+                          "agent_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "code": {
+                            "description": "<string>",
                             "type": "<string>"
                           },
                           "diagnosis": {
@@ -857,10 +995,24 @@
                             },
                             "type": "<string>"
                           },
+                          "exit_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "message": {
+                            "type": "<string>"
+                          },
+                          "retryable": {
+                            "description": "<string>",
                             "type": "<string>"
                           }
                         },
+                        "required": [
+                          "<string>",
+                          "<string>",
+                          "<string>",
+                          "<string>"
+                        ],
                         "type": "<string>"
                       },
                       "ok": {
@@ -871,6 +1023,10 @@
                         "type": "<string>"
                       }
                     },
+                    "required": [
+                      "<string>",
+                      "<string>"
+                    ],
                     "type": "<string>"
                   }
                 }
@@ -901,9 +1057,17 @@
                 "application/json": {
                   "schema": {
                     "properties": {
+                      "command": {
+                        "type": "<string>"
+                      },
                       "error": {
                         "properties": {
+                          "agent_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "code": {
+                            "description": "<string>",
                             "type": "<string>"
                           },
                           "diagnosis": {
@@ -912,10 +1076,24 @@
                             },
                             "type": "<string>"
                           },
+                          "exit_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "message": {
+                            "type": "<string>"
+                          },
+                          "retryable": {
+                            "description": "<string>",
                             "type": "<string>"
                           }
                         },
+                        "required": [
+                          "<string>",
+                          "<string>",
+                          "<string>",
+                          "<string>"
+                        ],
                         "type": "<string>"
                       },
                       "ok": {
@@ -926,6 +1104,10 @@
                         "type": "<string>"
                       }
                     },
+                    "required": [
+                      "<string>",
+                      "<string>"
+                    ],
                     "type": "<string>"
                   }
                 }
@@ -1044,9 +1226,17 @@
                 "application/json": {
                   "schema": {
                     "properties": {
+                      "command": {
+                        "type": "<string>"
+                      },
                       "error": {
                         "properties": {
+                          "agent_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "code": {
+                            "description": "<string>",
                             "type": "<string>"
                           },
                           "diagnosis": {
@@ -1055,10 +1245,24 @@
                             },
                             "type": "<string>"
                           },
+                          "exit_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "message": {
+                            "type": "<string>"
+                          },
+                          "retryable": {
+                            "description": "<string>",
                             "type": "<string>"
                           }
                         },
+                        "required": [
+                          "<string>",
+                          "<string>",
+                          "<string>",
+                          "<string>"
+                        ],
                         "type": "<string>"
                       },
                       "ok": {
@@ -1069,6 +1273,10 @@
                         "type": "<string>"
                       }
                     },
+                    "required": [
+                      "<string>",
+                      "<string>"
+                    ],
                     "type": "<string>"
                   }
                 }
@@ -1201,9 +1409,17 @@
                 "application/json": {
                   "schema": {
                     "properties": {
+                      "command": {
+                        "type": "<string>"
+                      },
                       "error": {
                         "properties": {
+                          "agent_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "code": {
+                            "description": "<string>",
                             "type": "<string>"
                           },
                           "diagnosis": {
@@ -1212,10 +1428,24 @@
                             },
                             "type": "<string>"
                           },
+                          "exit_code": {
+                            "description": "<string>",
+                            "type": "<string>"
+                          },
                           "message": {
+                            "type": "<string>"
+                          },
+                          "retryable": {
+                            "description": "<string>",
                             "type": "<string>"
                           }
                         },
+                        "required": [
+                          "<string>",
+                          "<string>",
+                          "<string>",
+                          "<string>"
+                        ],
                         "type": "<string>"
                       },
                       "ok": {
@@ -1226,6 +1456,10 @@
                         "type": "<string>"
                       }
                     },
+                    "required": [
+                      "<string>",
+                      "<string>"
+                    ],
                     "type": "<string>"
                   }
                 }

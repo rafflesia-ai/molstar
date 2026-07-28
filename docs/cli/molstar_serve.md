@@ -19,7 +19,7 @@ molstar serve [flags]
       --foreground-report         print a detailed startup report before serving
   -h, --help                      help for serve
       --job-store string          directory for persisted async job records
-      --job-ttl string            prune persisted job records older than this duration on startup, e.g. 24h
+      --job-ttl string            prune persisted job records older than this age on startup, e.g. 7d, 24h
       --max-atoms int             maximum atoms per local/cached structure when countable
       --max-download-bytes int    maximum bytes per cached remote download
       --max-outputs int           maximum number of outputs

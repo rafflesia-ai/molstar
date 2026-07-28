@@ -13,7 +13,7 @@ molstar cache prune [flags]
       --dry-run             print what would be removed
   -h, --help                help for prune
       --json                write JSON report
-      --older-than string   only prune entries older than a duration such as 720h
+      --older-than string   only prune entries older than this age, e.g. 30d, 720h
 ```
 
 ### SEE ALSO

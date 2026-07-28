@@ -28,6 +28,10 @@
 
 ### Fixed
 
+- Every HTTP server error response now carries the standard `{ok, command, error{code, agent_code, message, retryable, exit_code, diagnosis}, timestamp}` envelope. Job/output 404s and 405s answered with a bare `{"ok":false,"error":"job not found"}` string, and unmatched paths fell through to net/http's plain-text `404 page not found`, so `error.agent_code` was missing exactly when a request had failed.
+- The `serve --openapi` error schema documents `agent_code`, `retryable`, and `exit_code`. It listed only `code`, `message`, and `diagnosis`, omitting the classifier `docs/json-contracts.md` tells agents to branch on.
+- All retention flags accept the same duration syntax. `logs prune --older-than` accepted days (`14d`) while `cache prune --older-than`, `jobs prune --ttl`, and `serve --job-ttl` rejected them with `time: unknown unit "d"`; they now share one parser and one error message.
+- A renderer capability probe killed by its deadline reports the timeout and suggests `--timeout` instead of the bare `signal: killed`.
 - `--timeout` and server-side job cancellation interrupt renderer commands that spawn a child process. The renderer ran under `exec.CommandContext`, which signals only the direct child; a grandchild kept the inherited stdout/stderr pipes open, so the wait never returned and the render hung indefinitely instead of timing out. The renderer now runs in its own process group and the whole group is killed on cancellation, so the grandchild does not leak either.
 - `GET /jobs/{id}/events` streams a running job to its terminal event. It wrote a one-shot snapshot of the events recorded so far, so the documented async flow — submit, then stream — closed the stream mid-render and never delivered `succeeded`/`failed`.
 - `inspect --semantic` works on structures whose inspect payload exceeds 16 KiB. It parsed the report-truncated copy of the renderer's stdout, so anything larger than the truncation limit — 4HHB's payload is ~24 KB — failed to decode and returned no semantic stats at all. Reports still carry the truncated copy.

@@ -3,20 +3,30 @@ package cli
 import "github.com/rafflesia-ai/molstar/internal/job"
 
 func serveOpenAPISchema() map[string]any {
+	// Mirrors the errorBody the server actually emits. agent_code, retryable, and
+	// exit_code were missing here even though docs/json-contracts.md names them
+	// as the stable fields to branch on, so a client generated from this schema
+	// had no typed access to the classifier it is supposed to use.
 	errorSchema := map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ok": map[string]any{"type": "boolean"},
+			"ok":      map[string]any{"type": "boolean"},
+			"command": map[string]any{"type": "string"},
 			"error": map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"code":      map[string]any{"type": "string"},
-					"message":   map[string]any{"type": "string"},
-					"diagnosis": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+					"code":       map[string]any{"type": "string", "description": "Internal command/server classifier."},
+					"agent_code": map[string]any{"type": "string", "description": "Stable automation classifier; branch on this, not on message text."},
+					"message":    map[string]any{"type": "string"},
+					"retryable":  map[string]any{"type": "boolean", "description": "Whether retrying the same request may succeed."},
+					"exit_code":  map[string]any{"type": "integer", "description": "Exit code the equivalent CLI invocation would return."},
+					"diagnosis":  map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 				},
+				"required": []any{"code", "agent_code", "message", "retryable"},
 			},
 			"timestamp": map[string]any{"type": "string", "format": "date-time"},
 		},
+		"required": []any{"ok", "error"},
 	}
 	jobSchema := job.JSONSchema()
 	jobRef := map[string]any{"$ref": "#/components/schemas/Job"}
