@@ -22,12 +22,32 @@ The CLI has two JSON stability levels.
 | `server * --json` | server REST response or wrapped wait report | `ok: true` on server body | error envelope for client/setup failures; server error body for HTTP failures | job `id`, `status`, `report`, `error`, `downloaded_outputs` |
 | `rpc * --json` | JSON-RPC envelope | `result.ok: true` for built-in methods | JSON-RPC error envelope, then non-zero | `jsonrpc`, `result`, `error.code`, `error.message` |
 | `serve --openapi` | OpenAPI document | `openapi` field | error envelope | `openapi`, `paths`, `components`, `x-codeSamples` |
+| `doctor --json` | environment report | `ok: true` | same report with `ok: false`, exit 6 | `ok`, `checks[*].name`, `checks[*].ok`, `renderer.primary.available`, `renderer.primary.ok` |
+| `capabilities --json` | capability report | `ok: true` | same report with `ok: false` | `ok`, `matrix[*].target`, `matrix[*].available`, `matrix[*].ok` |
+
+Note that `capabilities` reports whether each renderer target **exists**, not whether it runs: `ok`
+is `primary.available && validate.available`, and a renderer that is present but broken still reports
+`ok: true`. Use `doctor`, which probes, to find out whether the renderer actually works.
+| `install-local --json` | install report | `ok: true` | error envelope | `ok`, `binary`, `config`, `home`, `renderer` |
+| `install-artifact --json` | install report | `ok: true` | error envelope | `ok`, `binary`, `config`, `home`, `renderer`, `capabilities.ok` |
+| `update-runtime --json` | runtime report | `ok: true` | same report with `ok: false`, exit 6 | `ok`, `home`, `config`, `installed`, `capabilities.ok` |
 
 Commands that print artifacts rather than reports, such as `job schema --out file` or `scene compile --out file`, keep stdout quiet when writing to a file unless they explicitly document a JSON report.
 
 `render --report FILE` writes the same report to `FILE` that `--json` writes to stdout, including
 `run_id` and `run_log`, so an agent can drive `logs export`, `logs verify`, and `diagnose` straight
 from the report file.
+
+Two failure shapes appear in that table, and the difference is deliberate. Most commands emit the
+**error envelope** described below. A handful — `doctor`, `capabilities`, `update-runtime`,
+`self-test`, `smoke`, `serve smoke`, `fixtures verify`, and `compat check` — instead re-emit their
+own **report** with `ok: false` and exit non-zero, because the report body is the diagnosis and an
+envelope would throw it away. Branch on `ok` for those, and read the nested detail (`checks[*]`,
+`capabilities`) for the cause. They do not carry `error.agent_code`.
+
+`install-artifact --json` probes the runtime it installed and fails with exit 6 if that runtime
+cannot render, so a successful report means the install is usable rather than merely well-shaped.
+Pass `--verify=false` to install without probing; the report then omits `capabilities`.
 
 `batch --json` ends its JSON Lines stream with a summary object carrying `summary: true`. Batch jobs
 are inline job objects, so per-job lines identify themselves with `id` and `index`, not with an input

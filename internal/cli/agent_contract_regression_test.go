@@ -733,3 +733,75 @@ func TestWorkerExitClassifiesAsRetryableRenderer(t *testing.T) {
 		t.Fatalf("message should say the worker exited: %v", err)
 	}
 }
+
+// docs/json-contracts.md documents two failure shapes. Most commands emit the
+// error envelope; a handful re-emit their own report with ok:false and a
+// non-zero exit, because the report body is the diagnosis and an envelope would
+// throw it away. Pin the split so neither side drifts into the other.
+func TestFailureShapeFamilies(t *testing.T) {
+	if goruntime.GOOS == "windows" {
+		t.Skip("stub renderer is a POSIX shell script")
+	}
+	dir := t.TempDir()
+	// A renderer that exists but always fails. A command that does not exist is
+	// discarded by validCommand and the resolver falls back to auto-detection,
+	// which would quietly find a working renderer instead.
+	stub := filepath.Join(dir, "failing-renderer")
+	if err := os.WriteFile(stub, []byte("#!/bin/sh\nexit 1\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	configPath := filepath.Join(dir, "config.json")
+	config := `{"home":"` + dir + `","renderer_command":["` + stub + `"],` +
+		`"renderer_fallback_command":["` + stub + `"],` +
+		`"validate_command":["` + stub + `"]}`
+	if err := os.WriteFile(configPath, []byte(config), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("MOLSTAR_CONFIG", configPath)
+
+	decode := func(t *testing.T, stdout string) map[string]any {
+		t.Helper()
+		var body map[string]any
+		if err := json.Unmarshal([]byte(stdout), &body); err != nil {
+			t.Fatalf("stdout is not a JSON object: %v\n%s", err, stdout)
+		}
+		return body
+	}
+
+	t.Run("report style keeps its diagnosis", func(t *testing.T) {
+		// capabilities is deliberately not here: it reports availability, not
+		// health, so a present-but-broken renderer still gives ok: true.
+		for _, args := range [][]string{
+			{"doctor", "--json"},
+		} {
+			stdout, _, err := runAppForTest(context.Background(), args...)
+			if err == nil {
+				t.Fatalf("%v should fail against an unusable renderer", args)
+			}
+			body := decode(t, stdout)
+			if body["ok"] != false {
+				t.Fatalf("%v: ok = %v, want false", args, body["ok"])
+			}
+			if _, hasEnvelope := body["error"]; hasEnvelope {
+				t.Fatalf("%v: report-style commands must not emit an error envelope", args)
+			}
+		}
+	})
+
+	t.Run("envelope style stays branchable", func(t *testing.T) {
+		stdout, _, err := runAppForTest(context.Background(), "job", "validate", filepath.Join(dir, "missing.json"), "--json")
+		if err == nil {
+			t.Fatal("validating a missing job should fail")
+		}
+		body := decode(t, stdout)
+		envelope, ok := body["error"].(map[string]any)
+		if !ok {
+			t.Fatalf("envelope-style commands must emit error as an object, got %T", body["error"])
+		}
+		for _, field := range []string{"code", "agent_code", "message", "retryable", "exit_code"} {
+			if _, present := envelope[field]; !present {
+				t.Fatalf("error envelope is missing %q: %#v", field, envelope)
+			}
+		}
+	})
+}

@@ -31,14 +31,20 @@ classifier, useful for logging and for picking a more specific remedy.
 | `invalid_job` | `invalid_scene` | 3 | no | The scene is invalid, or it rendered nothing visible — check selectors and camera |
 | `security_policy` | `runtime_blocked` | 4 | no | Runtime policy, cache, path, timeout, or resource limit blocked it |
 | `security_policy` | `security_policy` | 8 | no | Allowlist, offline, path, or host policy rejected it |
-| `network_blocked` | `network_error` | 7 | yes | Fetch failed, or the offline cache was missing an entry |
+| `network_blocked` | `network_error` | 7 | see note | A fetch failed, or an offline cache had no entry |
 | `renderer_unavailable` | `renderer_unavailable` | 5 | yes | Node, Mol\*, GL, or canvas is missing — run `doctor` |
 | `renderer_unavailable` | `renderer_abi_mismatch` | 5 | yes | Native modules built for the wrong Node ABI — run `update-runtime` |
 | `renderer_unavailable` | `render_failed` | 5 | yes | Mol\* loaded the scene but rendering or export failed |
+| `renderer_unavailable` | `doctor_failed` | 6 | yes | A capability probe failed — the renderer cannot run |
 | `webgl_unavailable` | `renderer_unavailable` | 5 | yes | The renderer exists but cannot create a headless WebGL context |
 | `server_busy` | `server_busy` | 9 | yes | Queue is full — retry with backoff, or submit async |
 | `canceled` | `canceled` | 130 | no | The request, async job, or job timeout ended the run |
 | `internal_error` | `internal_error` | 1 | no | Unclassified — capture the envelope and report it |
+
+`network_blocked` is the one code whose retryability depends on the cause: a transport failure such
+as a DNS or connection error is retryable, while a deliberately offline runtime with an empty cache
+is not, because retrying cannot help until the environment changes. Branch on `error.retryable`
+rather than inferring it from the code.
 
 A blank render is a scene problem, not a renderer problem: it reports `invalid_scene` and is not
 retryable, because rerunning the same job cannot fix an empty selection.

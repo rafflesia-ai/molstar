@@ -26,6 +26,12 @@
 - The manual release-candidate workflow now runs the same `scripts/release-candidate.sh` entry point documented for local use.
 - Agent JSON contract tests now include compact stable-field assertions in addition to full shape snapshots.
 
+### Documentation
+
+- The README error table lists `doctor_failed` and no longer claims `network_blocked` is unconditionally retryable — a transport failure is, a deliberately offline runtime with an empty cache is not.
+- `docs/json-contracts.md` covers `doctor`, `capabilities`, `install-local`, `install-artifact`, and `update-runtime`, and explains the two failure shapes: most commands emit the error envelope, while the probing commands re-emit their own report with `ok: false` and no `error` object, because the report body is the diagnosis. `TestFailureShapeFamilies` pins the split.
+- Documented that `capabilities` reports whether each renderer target exists, not whether it runs: a present-but-broken renderer still reports `ok: true`, and `doctor` is the command that probes.
+
 ### Fixed
 
 - `install-artifact` verifies that the runtime it just installed can actually run, instead of reporting success when the expected files merely exist. An artifact built for another Node ABI, or a truncated download, passed the file check and then failed at the first render — while `doctor` and `update-runtime` both rejected the same runtime. The post-install probe matches `update-runtime`'s, reports the renderer's Node and Mol\* versions on success, and names the failing line on failure. `--verify=false` skips it.
