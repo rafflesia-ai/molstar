@@ -9,7 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestPrepareRuntimeOfflineCacheMissFails(t *testing.T) {
@@ -287,3 +290,134 @@ func TestAtomLimitReportsWhenItCannotBeEnforced(t *testing.T) {
 }
 
 func boolPtr(v bool) *bool { return &v }
+
+// The download temp file used to be a fixed "<cachePath>.tmp" derived from the
+// URL, so every concurrent fetch of the same input shared one file: they
+// overwrote each other and all but one rename failed with ENOENT. `batch
+// --concurrency` failed most of its jobs whenever they shared an uncached input.
+func TestConcurrentDownloadsOfTheSameInputAllSucceed(t *testing.T) {
+	payload := []byte(strings.Repeat("data_test\n", 4096))
+	var hits atomic.Int64
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		// Widen the window between create and rename.
+		time.Sleep(20 * time.Millisecond)
+		w.Header().Set("Content-Type", "chemical/x-cif")
+		_, _ = w.Write(payload)
+	}))
+	defer server.Close()
+
+	cacheDir := t.TempDir()
+	const workers = 8
+	errs := make(chan error, workers)
+	var start sync.WaitGroup
+	start.Add(1)
+	var done sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		done.Add(1)
+		go func() {
+			defer done.Done()
+			start.Wait()
+			j := Job{
+				Version: 1,
+				Runtime: Runtime{Cache: cacheDir},
+				Inputs:  map[string]Input{"p": {URL: server.URL + "/model.cif", Format: "mmcif"}},
+			}
+			_, _, err := PrepareRuntime(context.Background(), j)
+			errs <- err
+		}()
+	}
+	start.Done()
+	done.Wait()
+	close(errs)
+
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("concurrent prepare failed: %v", err)
+		}
+	}
+
+	cachePath := CachePathFor(cacheDir, server.URL+"/model.cif", "mmcif")
+	info, err := os.Stat(cachePath)
+	if err != nil {
+		t.Fatalf("cache entry missing: %v", err)
+	}
+	if info.Size() != int64(len(payload)) {
+		t.Fatalf("cache entry is %d bytes, want %d", info.Size(), len(payload))
+	}
+	// No temp files may survive.
+	entries, err := os.ReadDir(filepath.Join(cacheDir, "downloads"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if strings.HasSuffix(entry.Name(), ".tmp") {
+			t.Fatalf("leftover temp file %q", entry.Name())
+		}
+	}
+}
+
+// A cache entry whose size no longer matches what was recorded is damaged.
+// Handing it to the renderer produced an opaque "renderer failed" that looked
+// retryable, so an offline caller retried a broken file forever.
+func TestCorruptCacheEntryIsDetected(t *testing.T) {
+	payload := []byte(strings.Repeat("data_test\n", 512))
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write(payload)
+	}))
+	defer server.Close()
+
+	cacheDir := t.TempDir()
+	newJob := func(offline bool) Job {
+		runtime := Runtime{Cache: cacheDir}
+		if offline {
+			runtime.Offline = true
+		}
+		return Job{
+			Version: 1,
+			Runtime: runtime,
+			Inputs:  map[string]Input{"p": {URL: server.URL + "/model.cif", Format: "mmcif"}},
+		}
+	}
+
+	if _, _, err := PrepareRuntime(context.Background(), newJob(false)); err != nil {
+		t.Fatalf("warm the cache: %v", err)
+	}
+	cachePath := CachePathFor(cacheDir, server.URL+"/model.cif", "mmcif")
+	truncate := func() {
+		if err := os.WriteFile(cachePath, payload[:64], 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	truncate()
+	_, _, err := PrepareRuntime(context.Background(), newJob(true))
+	if err == nil {
+		t.Fatal("an offline run must reject a corrupt cache entry instead of rendering it")
+	}
+	if !strings.Contains(err.Error(), "corrupt") {
+		t.Fatalf("error should name the corruption: %v", err)
+	}
+
+	truncate()
+	_, report, err := PrepareRuntime(context.Background(), newJob(false))
+	if err != nil {
+		t.Fatalf("an online run should re-download a corrupt entry: %v", err)
+	}
+	if len(report.Warnings) == 0 || !strings.Contains(report.Warnings[0], "corrupt") {
+		t.Fatalf("re-download should be reported: %#v", report.Warnings)
+	}
+	info, err := os.Stat(cachePath)
+	if err != nil || info.Size() != int64(len(payload)) {
+		t.Fatalf("cache entry was not repaired: %v %d", err, info.Size())
+	}
+
+	// A healthy entry produces no warning and works offline.
+	_, report, err = PrepareRuntime(context.Background(), newJob(true))
+	if err != nil {
+		t.Fatalf("healthy cache should serve an offline run: %v", err)
+	}
+	if len(report.Warnings) != 0 {
+		t.Fatalf("healthy cache should not warn: %#v", report.Warnings)
+	}
+}

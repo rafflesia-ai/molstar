@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -86,6 +87,17 @@ func PrepareRuntime(ctx context.Context, j Job) (Job, RuntimeReport, error) {
 		}
 		cachePath := cachePathFor(cacheDir, resolved, input.ResolvedFormat())
 		cached := PathExists(cachePath)
+		// A cache entry whose size no longer matches what was recorded at
+		// download time is damaged. Handing it to the renderer produced an opaque
+		// "renderer failed" that looked retryable, so an offline caller retried a
+		// broken file forever instead of being told to re-fetch it.
+		if cached && !cacheEntrySizeMatches(cachePath) {
+			if !network {
+				return Job{}, RuntimeReport{}, fmt.Errorf("cached input %q is corrupt: %s no longer matches its recorded size; remove it with `molstar cache prune` and fetch it again", ref, cachePath)
+			}
+			report.Warnings = append(report.Warnings, fmt.Sprintf("cached input %q was corrupt and has been downloaded again", ref))
+			cached = false
+		}
 		if !cached {
 			if !network {
 				return Job{}, RuntimeReport{}, fmt.Errorf("runtime offline/network=false and cache miss for input %q (%s)", ref, resolved)
@@ -291,11 +303,16 @@ func downloadToCache(ctx context.Context, rawURL, path string, limit int64, runt
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	file, err := os.Create(tmp)
+	// A per-download temp name, not a fixed "<path>.tmp": the temp path is
+	// derived from the URL, so every concurrent fetch of the same input shared
+	// one file. They overwrote each other and all but one rename failed with
+	// ENOENT, which made `batch --concurrency` fail most of its jobs whenever
+	// they shared an uncached input.
+	file, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".*.tmp")
 	if err != nil {
 		return err
 	}
+	tmp := file.Name()
 	written, copyErr := io.Copy(file, io.LimitReader(response.Body, limit+1))
 	closeErr := file.Close()
 	if copyErr != nil {
@@ -310,10 +327,35 @@ func downloadToCache(ctx context.Context, rawURL, path string, limit int64, runt
 		_ = os.Remove(tmp)
 		return fmt.Errorf("download exceeded runtime.max_download_bytes=%d", limit)
 	}
+	// Rename is atomic and replaces any existing file, so a concurrent winner is
+	// simply overwritten with identical bytes for the same URL.
 	if err := os.Rename(tmp, path); err != nil {
+		_ = os.Remove(tmp)
 		return err
 	}
 	return writeCacheEntry(rawURL, path)
+}
+
+// cacheEntrySizeMatches compares a cached file against the size recorded in its
+// sidecar. Size is deliberately cheap: hashing every cached input on every
+// render would scale with structure size for a check that is only guarding
+// against damage after the fact. `molstar cache verify` still does the full
+// checksum. Entries with no sidecar are treated as intact, since there is
+// nothing to compare against.
+func cacheEntrySizeMatches(path string) bool {
+	data, err := os.ReadFile(path + ".json")
+	if err != nil {
+		return true
+	}
+	var entry CacheEntry
+	if err := json.Unmarshal(data, &entry); err != nil || entry.Bytes <= 0 {
+		return true
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.Size() == entry.Bytes
 }
 
 func writeCacheEntry(rawURL, path string) error {
@@ -329,7 +371,30 @@ func writeCacheEntry(rawURL, path string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path+".json", append(data, '\n'), 0o644)
+	// Written through a temp file for the same reason as the payload: two
+	// concurrent downloads of one input would otherwise interleave their writes
+	// and leave a truncated sidecar behind.
+	sidecar := path + ".json"
+	file, err := os.CreateTemp(filepath.Dir(sidecar), filepath.Base(sidecar)+".*.tmp")
+	if err != nil {
+		return err
+	}
+	tmp := file.Name()
+	_, writeErr := file.Write(append(data, '\n'))
+	closeErr := file.Close()
+	if writeErr != nil || closeErr != nil {
+		_ = os.Remove(tmp)
+		return errors.Join(writeErr, closeErr)
+	}
+	if err := os.Chmod(tmp, 0o644); err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	if err := os.Rename(tmp, sidecar); err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	return nil
 }
 
 func cacheEntry(path string) (CacheEntry, error) {

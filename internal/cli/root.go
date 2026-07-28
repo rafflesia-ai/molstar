@@ -320,6 +320,11 @@ func classifyError(err error) errorKind {
 	}
 	message := strings.ToLower(err.Error())
 	switch {
+	// Ahead of the network rules: a damaged cache entry is bad input, not a
+	// transport problem, and re-fetching it is a deliberate act rather than
+	// something a retry loop should attempt.
+	case strings.Contains(message, "is corrupt"):
+		return kindInvalidInput
 	case strings.Contains(message, "appears blank"):
 		// The renderer ran and produced a well-formed image; the scene just had
 		// nothing visible in it.
@@ -379,6 +384,11 @@ func diagnoseError(err error) []string {
 	message := strings.ToLower(err.Error())
 	var hints []string
 	switch {
+	// Ahead of the network hint: every cache path contains a "downloads"
+	// directory, so a message naming one would otherwise be diagnosed as a
+	// network problem.
+	case strings.Contains(message, "is corrupt"):
+		hints = append(hints, "remove the damaged entry with `molstar cache prune`, then re-run with network access so it can be fetched again")
 	case strings.Contains(message, "appears blank"):
 		hints = append(hints, "the renderer worked but the scene had nothing visible; check that the component selectors match atoms with `molstar inspect JOB --semantic=auto --json`, and check camera focus/zoom")
 	case strings.Contains(message, "unsupported format"):
