@@ -1,13 +1,19 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rafflesia-ai/molstar/internal/job"
 )
@@ -210,6 +216,72 @@ func TestRenderReportFileCarriesRunID(t *testing.T) {
 	}
 	if fileReport.RunID != stdoutReport.RunID {
 		t.Fatalf("report file run_id %q != stdout run_id %q", fileReport.RunID, stdoutReport.RunID)
+	}
+}
+
+// GET /jobs/{id}/events must follow a running job to its terminal phase. It
+// wrote a one-shot snapshot of the events recorded so far, so the documented
+// async flow — submit, then stream events — closed the stream while the job was
+// still running and never delivered succeeded/failed. The existing async test
+// missed this because it polled until the job finished before asking for events.
+func TestJobEventsStreamDeliversTheTerminalEvent(t *testing.T) {
+	if goruntime.GOOS == "windows" {
+		t.Skip("shell sleep renderer is unix-only")
+	}
+	dir := t.TempDir()
+	rendererPath := filepath.Join(dir, "slow-renderer.sh")
+	if err := os.WriteFile(rendererPath, []byte("#!/usr/bin/env bash\nsleep 1\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	data, err := json.Marshal(minimalServeJob(t, dir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := app{stdout: io.Discard, stderr: io.Discard}
+	cmd := a.serveCommand()
+	handler := a.serveHandler(&serveFlags{workers: 1, queue: 2, noWorker: true, rendererCommand: rendererPath}, cmd)
+
+	submitted := httptest.NewRecorder()
+	handler.ServeHTTP(submitted, httptest.NewRequest(http.MethodPost, "/render?async=true", bytes.NewReader(data)))
+	if submitted.Code != http.StatusAccepted {
+		t.Fatalf("expected 202, got %d: %s", submitted.Code, submitted.Body.String())
+	}
+	var accepted struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(submitted.Body.Bytes(), &accepted); err != nil {
+		t.Fatal(err)
+	}
+
+	// Stream immediately: the renderer sleeps, so the job is still running here.
+	events := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/jobs/"+accepted.ID+"/events", nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	handler.ServeHTTP(events, request.WithContext(ctx))
+
+	if events.Code != http.StatusOK {
+		t.Fatalf("expected events 200, got %d: %s", events.Code, events.Body.String())
+	}
+	var phases []string
+	for _, line := range strings.Split(strings.TrimSpace(events.Body.String()), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		var event serverEvent
+		if err := json.Unmarshal([]byte(line), &event); err != nil {
+			t.Fatalf("event line is not JSON: %v\n%s", err, line)
+		}
+		phases = append(phases, event.Phase)
+	}
+	if len(phases) == 0 {
+		t.Fatal("event stream delivered nothing")
+	}
+	terminal := phases[len(phases)-1]
+	switch terminal {
+	case "succeeded", "failed", "canceled":
+	default:
+		t.Fatalf("event stream closed on phase %q without a terminal event; phases=%v", terminal, phases)
 	}
 }
 

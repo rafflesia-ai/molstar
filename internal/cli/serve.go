@@ -368,7 +368,7 @@ func (a app) serveMux(flags *serveFlags, cmd *cobra.Command, gate *renderGate, s
 				if !requireMethod(w, r, http.MethodGet) {
 					return
 				}
-				writeHTTPEvents(w, current)
+				writeHTTPEvents(w, r, current)
 				return
 			case "outputs":
 				if !requireMethod(w, r, http.MethodGet) {
@@ -1563,13 +1563,58 @@ func writeHTTPJSON(w http.ResponseWriter, status int, value any) {
 	_ = json.NewEncoder(w).Encode(value)
 }
 
-func writeHTTPEvents(w http.ResponseWriter, current *serverRenderJob) {
+// writeHTTPEvents streams a job's events as JSON Lines until the job reaches a
+// terminal phase or the client disconnects. It used to write a one-shot snapshot
+// of the events recorded so far, so a caller that followed the documented
+// async flow — submit, then GET /jobs/{id}/events — saw the stream close while
+// the job was still running and never received the terminal event.
+func writeHTTPEvents(w http.ResponseWriter, r *http.Request, current *serverRenderJob) {
 	w.Header().Set("Content-Type", "application/x-ndjson")
-	current.mu.Lock()
-	events := append([]serverEvent{}, current.Events...)
-	current.mu.Unlock()
-	for _, event := range events {
-		_ = json.NewEncoder(w).Encode(event)
+	w.Header().Set("Cache-Control", "no-cache")
+	flusher, _ := w.(http.Flusher)
+	encoder := json.NewEncoder(w)
+
+	sent := 0
+	// drain writes every event recorded since the last call and reports whether
+	// the client is still connected.
+	drain := func() bool {
+		current.mu.Lock()
+		pending := append([]serverEvent{}, current.Events[min(sent, len(current.Events)):]...)
+		current.mu.Unlock()
+		for _, event := range pending {
+			if err := encoder.Encode(event); err != nil {
+				return false
+			}
+			sent++
+		}
+		if flusher != nil {
+			flusher.Flush()
+		}
+		return true
+	}
+
+	if !drain() {
+		return
+	}
+	if current.done == nil {
+		return
+	}
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-current.done:
+			// The worker records the terminal event before closing done; drain
+			// once more so it is delivered.
+			drain()
+			return
+		case <-r.Context().Done():
+			return
+		case <-ticker.C:
+			if !drain() {
+				return
+			}
+		}
 	}
 }
 

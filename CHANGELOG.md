@@ -28,6 +28,8 @@
 
 ### Fixed
 
+- `--timeout` and server-side job cancellation interrupt renderer commands that spawn a child process. The renderer ran under `exec.CommandContext`, which signals only the direct child; a grandchild kept the inherited stdout/stderr pipes open, so the wait never returned and the render hung indefinitely instead of timing out. The renderer now runs in its own process group and the whole group is killed on cancellation, so the grandchild does not leak either.
+- `GET /jobs/{id}/events` streams a running job to its terminal event. It wrote a one-shot snapshot of the events recorded so far, so the documented async flow — submit, then stream — closed the stream mid-render and never delivered `succeeded`/`failed`.
 - `inspect --semantic` works on structures whose inspect payload exceeds 16 KiB. It parsed the report-truncated copy of the renderer's stdout, so anything larger than the truncation limit — 4HHB's payload is ~24 KB — failed to decode and returned no semantic stats at all. Reports still carry the truncated copy.
 - `inspect` records a top-level warning when semantic inspection fails in non-strict mode. The failure was only visible inside the nested `semantic` object, so `ok` stayed true and `warnings` stayed empty while the renderer-computed stats were silently missing.
 - `molstar fixtures verify --network` passes again. The three public recipe fixtures set `--out` and `--size` but not `sizeExplicit`, so the recipes' declared 1200x900 output size won and each fixture's own output verification then rejected the render for having the wrong dimensions.

@@ -145,14 +145,14 @@ func (m Molstar) run(ctx context.Context, args []string) (CommandResult, error) 
 		fmt.Fprintln(outputOrDiscard(m.Stderr), strings.Join(args, " "))
 		return CommandResult{Command: args, Skipped: true, StartedAt: start.UTC().Format(time.RFC3339Nano)}, nil
 	}
-	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
+	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = m.WorkingDirectory
 	cmd.Env = commandEnv(m.Env)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = io.MultiWriter(&limitedWriter{w: outputOrDiscard(m.Stdout), remaining: liveStreamLimit}, &stdout)
 	cmd.Stderr = io.MultiWriter(&limitedWriter{w: outputOrDiscard(m.Stderr), remaining: liveStreamLimit}, &stderr)
-	if err := cmd.Run(); err != nil {
+	if err := runCommandWithContext(ctx, cmd); err != nil {
 		result := CommandResult{
 			Command:    args,
 			StartedAt:  start.UTC().Format(time.RFC3339Nano),
