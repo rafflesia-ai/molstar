@@ -208,9 +208,44 @@ func (a app) runBatch(ctx context.Context, path string, flags *batchFlags, cmd *
 		fmt.Fprintf(a.stdout, "summary total=%d completed=%d ok=%d skipped=%d failed=%d\n", summary.Total, summary.Completed, summary.Succeeded, summary.Skipped, summary.Failed)
 	}
 	if !summary.OK {
-		return markError(kindRender, fmt.Errorf("one or more batch jobs failed"))
+		err := markError(batchFailureKind(reports), fmt.Errorf("%d of %d batch jobs failed", summary.Failed, summary.Total))
+		if flags.jsonReport {
+			// The documented batch contract is JSON Lines: one report per job plus
+			// the summary. Letting the generic handler append a pretty-printed
+			// error envelope here emitted a multi-line object into that stream and
+			// broke every line-by-line consumer. Per-job failures are already
+			// reported on their own lines; only the exit code is still owed.
+			return alreadyReported(err)
+		}
+		return err
 	}
 	return nil
+}
+
+// batchFailureKind classifies the aggregate failure from the constituent job
+// failures rather than assuming a renderer fault. Reporting a batch of bad
+// selectors as renderer_unavailable/retryable told callers to retry work that
+// could never succeed.
+func batchFailureKind(reports []batchReport) errorKind {
+	kind := errorKind("")
+	for _, report := range reports {
+		err := batchReportError(report)
+		if err == nil {
+			continue
+		}
+		current := classifyError(err)
+		if kind == "" {
+			kind = current
+			continue
+		}
+		if kind != current {
+			return kindRender
+		}
+	}
+	if kind == "" {
+		return kindRender
+	}
+	return kind
 }
 
 func (a app) batchRunner(flags *batchFlags) render.Molstar {
@@ -241,9 +276,25 @@ func (a app) runBatchJobWithRetries(ctx context.Context, index int, j job.Job, f
 		if report.OK || report.Skipped || attempt == attempts {
 			return report
 		}
+		// Retrying a job whose failure is not retryable — a bad selector, a
+		// blank scene, a policy rejection — cannot succeed and just burns a
+		// render slot.
+		if !errorRetryable(batchReportError(report)) {
+			return report
+		}
 		last = report
 	}
 	return last
+}
+
+// batchReportError reconstructs a classifiable error from a report's recorded
+// message, which is all that survives once a job report is serialized.
+func batchReportError(report batchReport) error {
+	message := strings.TrimSpace(report.Error)
+	if message == "" {
+		return nil
+	}
+	return fmt.Errorf("%s", message)
 }
 
 func (a app) runBatchJob(ctx context.Context, index int, j job.Job, flags *batchFlags, baseRunner render.Molstar, selection workerRendererSelection) batchReport {

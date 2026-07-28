@@ -1,6 +1,10 @@
 package cli
 
 import (
+	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -73,5 +77,74 @@ func TestSummarizeBatch(t *testing.T) {
 	}
 	if len(summary.Outputs) != 2 {
 		t.Fatalf("unexpected outputs: %#v", summary.Outputs)
+	}
+}
+
+// batch --json is documented as JSON Lines: one report per job plus a summary.
+// When a job failed, the generic error handler also appended a pretty-printed,
+// multi-line error envelope to the same stream, so every line-by-line consumer
+// hit a bare "{" and failed to parse. The aggregate was additionally hardcoded
+// to render_failed/renderer_unavailable/retryable, which told callers to retry
+// a batch of bad selectors.
+func TestBatchJSONStreamStaysLineDelimited(t *testing.T) {
+	dir := t.TempDir()
+	modelPath := filepath.Join(dir, "one.cif")
+	if err := os.WriteFile(modelPath, []byte(oneAtomCIF), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// A selector that matches nothing renders blank, which is a scene failure.
+	failing := job.Job{
+		Version: 1,
+		Runtime: job.Runtime{AllowPaths: []string{dir}},
+		Inputs:  map[string]job.Input{"p": {Path: modelPath, Format: "mmcif"}},
+		Scene: job.Scene{Structures: []job.Structure{{
+			Ref:        "s",
+			Source:     "p",
+			Components: []job.Component{{Ref: "c", Select: "chain:ZZZ", Representation: job.Representation{Type: "cartoon"}}},
+		}}},
+		Outputs: []job.Output{{Type: "image", Path: filepath.Join(dir, "bad.png"), Size: []int{64, 48}}},
+	}
+	line, err := json.Marshal(failing)
+	if err != nil {
+		t.Fatal(err)
+	}
+	batchPath := filepath.Join(dir, "jobs.jsonl")
+	if err := os.WriteFile(batchPath, append(line, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	stdout, _, runErr := runAppForTest(context.Background(), "batch", batchPath, "--continue-on-error", "--json")
+	if runErr == nil {
+		t.Fatal("expected a failing batch to return an error")
+	}
+	if got := agentErrorCode(runErr); got != "invalid_job" {
+		t.Fatalf("aggregate agent_code = %q, want invalid_job for a scene failure", got)
+	}
+	if errorRetryable(runErr) {
+		t.Fatal("a batch of non-retryable failures must not be reported as retryable")
+	}
+
+	for i, raw := range strings.Split(strings.TrimSpace(stdout), "\n") {
+		if strings.TrimSpace(raw) == "" {
+			continue
+		}
+		var decoded map[string]any
+		if err := json.Unmarshal([]byte(raw), &decoded); err != nil {
+			t.Fatalf("batch stdout line %d is not a complete JSON object: %v\n%q", i, err, raw)
+		}
+	}
+}
+
+// Retrying a job whose failure is not retryable cannot succeed and just burns a
+// render slot.
+func TestBatchDoesNotRetryNonRetryableFailures(t *testing.T) {
+	if !errorRetryable(batchReportError(batchReport{Error: `cache input "p": dial tcp: lookup x.invalid: no such host`})) {
+		t.Fatal("a transport failure should be retryable")
+	}
+	if errorRetryable(batchReportError(batchReport{Error: "output out.png appears blank: the scene rendered no visible geometry"})) {
+		t.Fatal("a blank scene should not be retryable")
+	}
+	if batchReportError(batchReport{}) != nil {
+		t.Fatal("a report without an error should produce no error")
 	}
 }

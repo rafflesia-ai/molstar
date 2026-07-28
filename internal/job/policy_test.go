@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -145,5 +146,64 @@ func TestValidateRenderRejectsNonPositiveSize(t *testing.T) {
 	}
 	if err := base(nil).ValidateRender(); err != nil {
 		t.Fatalf("omitted size should default, got: %v", err)
+	}
+}
+
+// MVS refs address nodes in the compiled document, so they must be unique across
+// the scene. Duplicates used to validate and compile into a document with two
+// identically-named nodes: camera.focus bound to whichever came first, and the
+// renderer's ref map collapsed them so one component's semantic stats vanished.
+func TestValidateSceneRejectsDuplicateRefs(t *testing.T) {
+	base := func() Job {
+		return Job{
+			Version: 1,
+			Inputs:  map[string]Input{"p": {ID: "1cbs", Provider: "pdbe"}},
+			Scene: Scene{Structures: []Structure{{
+				Ref:    "s",
+				Source: "p",
+				Components: []Component{
+					{Ref: "polymer", Select: "polymer", Representation: Representation{Type: "cartoon"}},
+					{Ref: "ligand", Select: "ligand", Representation: Representation{Type: "ball-and-stick"}},
+				},
+			}}},
+		}
+	}
+
+	if err := base().ValidateScene(); err != nil {
+		t.Fatalf("distinct refs should validate: %v", err)
+	}
+
+	duplicate := base()
+	duplicate.Scene.Structures[0].Components[1].Ref = "polymer"
+	err := duplicate.ValidateScene()
+	if err == nil {
+		t.Fatal("duplicate component refs should be rejected")
+	}
+	if !strings.Contains(err.Error(), "unique") {
+		t.Fatalf("error should explain the uniqueness rule: %v", err)
+	}
+
+	collision := base()
+	collision.Scene.Structures[0].Components[0].Ref = "s"
+	if err := collision.ValidateScene(); err == nil {
+		t.Fatal("a component ref colliding with a structure ref should be rejected")
+	}
+
+	acrossStructures := base()
+	acrossStructures.Scene.Structures = append(acrossStructures.Scene.Structures, Structure{
+		Ref:        "s2",
+		Source:     "p",
+		Components: []Component{{Ref: "ligand", Select: "ion", Representation: Representation{Type: "spacefill"}}},
+	})
+	if err := acrossStructures.ValidateScene(); err == nil {
+		t.Fatal("refs must be unique across structures, not just within one")
+	}
+
+	// Empty refs are generated downstream and must not collide with each other.
+	blank := base()
+	blank.Scene.Structures[0].Components[0].Ref = ""
+	blank.Scene.Structures[0].Components[1].Ref = ""
+	if err := blank.ValidateScene(); err != nil {
+		t.Fatalf("empty refs should still validate: %v", err)
 	}
 }

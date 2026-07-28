@@ -245,11 +245,22 @@ func agentErrorCode(err error) errorKind {
 
 func errorRetryable(err error) bool {
 	switch agentErrorCode(err) {
-	case kindServerBusy, "network_blocked", "renderer_unavailable", "webgl_unavailable":
+	case kindServerBusy, "renderer_unavailable", "webgl_unavailable":
 		return true
+	case "network_blocked":
+		// A transport failure may clear on its own; a deliberately disabled
+		// network with an empty cache never will, so retrying it is pure waste.
+		return !deliberatelyOffline(err)
 	default:
 		return false
 	}
+}
+
+func deliberatelyOffline(err error) bool {
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "offline") ||
+		strings.Contains(message, "network is disabled") ||
+		strings.Contains(message, "network=false")
 }
 
 // usageErrorPrefixes are the messages Cobra produces when the caller typed a bad
@@ -262,6 +273,24 @@ var usageErrorPrefixes = []string{
 	"flag needs an argument",
 	"invalid argument",
 	"bad flag syntax",
+}
+
+// markPrepareError types a runtime-preparation failure. Preparation covers
+// policy checks, cache lookups, and remote downloads, so blanket-marking every
+// failure as kindRuntime reported network outages as security_policy. Let the
+// message pick a more specific kind when it recognizes one.
+func markPrepareError(err error) error {
+	if err == nil {
+		return nil
+	}
+	var typed kindError
+	if errors.As(err, &typed) {
+		return err
+	}
+	if kind := classifyError(err); kind != kindInternal {
+		return markError(kind, err)
+	}
+	return markError(kindRuntime, err)
 }
 
 func markUsageError(err error) error {
@@ -324,6 +353,20 @@ func classifyError(err error) errorKind {
 		strings.Contains(message, "network") ||
 		strings.Contains(message, "download") ||
 		strings.Contains(message, "no cached"):
+		return kindNetwork
+	// Transport failures from the Go HTTP client. Without these a DNS or
+	// connection failure — the canonical transient, retryable error — fell
+	// through to internal_error, or to security_policy once the runtime wrapper
+	// had typed it, and callers were told not to retry a fetch that had simply
+	// found the network down.
+	case strings.Contains(message, "no such host") ||
+		strings.Contains(message, "dial tcp") ||
+		strings.Contains(message, "connection refused") ||
+		strings.Contains(message, "connection reset") ||
+		strings.Contains(message, "i/o timeout") ||
+		strings.Contains(message, "tls handshake") ||
+		strings.Contains(message, "server misbehaving") ||
+		strings.Contains(message, "http status"):
 		return kindNetwork
 	}
 	return kindInternal

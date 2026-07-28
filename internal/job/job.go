@@ -121,6 +121,23 @@ func (j Job) ValidateScene() error {
 	if len(j.Scene.Structures) == 0 {
 		return errors.New("scene.structures must include at least one structure")
 	}
+	// MVS refs address nodes in the compiled document, so they have to be unique
+	// across the whole scene. Duplicates used to compile happily into a document
+	// with two identically-named nodes: camera.focus then bound to whichever came
+	// first, and the renderer's ref map collapsed them, silently dropping one
+	// component's semantic stats.
+	sceneRefs := map[string]string{}
+	claimRef := func(ref string, location string) error {
+		ref = strings.TrimSpace(ref)
+		if ref == "" {
+			return nil
+		}
+		if previous, taken := sceneRefs[ref]; taken {
+			return fmt.Errorf("%s uses ref %q, which is already used by %s; scene refs must be unique", location, ref, previous)
+		}
+		sceneRefs[ref] = location
+		return nil
+	}
 	for i, structure := range j.Scene.Structures {
 		if strings.TrimSpace(structure.Source) == "" {
 			return fmt.Errorf("scene.structures[%d].source is required", i)
@@ -128,9 +145,15 @@ func (j Job) ValidateScene() error {
 		if _, ok := j.Inputs[structure.Source]; !ok {
 			return fmt.Errorf("scene.structures[%d].source references unknown input %q", i, structure.Source)
 		}
+		if err := claimRef(structure.Ref, fmt.Sprintf("scene.structures[%d]", i)); err != nil {
+			return err
+		}
 		for c, component := range structure.Components {
 			if strings.TrimSpace(component.Select) == "" {
 				return fmt.Errorf("scene.structures[%d].components[%d].select is required", i, c)
+			}
+			if err := claimRef(component.Ref, fmt.Sprintf("scene.structures[%d].components[%d]", i, c)); err != nil {
+				return err
 			}
 		}
 	}

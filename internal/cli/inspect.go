@@ -118,7 +118,7 @@ func (a app) runInspect(ctx context.Context, path string, flags *inspectFlags, c
 	if !flags.noPrepare {
 		prepared, runtimeReport, err := prepareJob(ctx, j)
 		if err != nil {
-			return nil, markError(kindRuntime, err)
+			return nil, markPrepareError(err)
 		}
 		j = prepared
 		report["cached_inputs"] = runtimeReport.CachedInputs

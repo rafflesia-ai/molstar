@@ -237,7 +237,7 @@ func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cm
 		j, runtimeReport, err := prepareJob(ctx, j)
 		report.finishStage("prepare_runtime", "demo", stageStart, err)
 		if err != nil {
-			return markError(kindRuntime, err)
+			return markPrepareError(err)
 		}
 		report.CachedInputs = runtimeReport.CachedInputs
 		report.Warnings = append(report.Warnings, runtimeReport.Warnings...)
@@ -273,7 +273,7 @@ func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cm
 			j, runtimeReport, err := prepareJob(ctx, j)
 			report.finishStage("prepare_runtime", name, stageStart, err)
 			if err != nil {
-				return markError(kindRuntime, err)
+				return markPrepareError(err)
 			}
 			report.CachedInputs = runtimeReport.CachedInputs
 			report.Warnings = append(report.Warnings, runtimeReport.Warnings...)
@@ -305,7 +305,7 @@ func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cm
 		j, runtimeReport, err := prepareJob(ctx, j)
 		report.finishStage("prepare_runtime", input, stageStart, err)
 		if err != nil {
-			return markError(kindRuntime, err)
+			return markPrepareError(err)
 		}
 		report.CachedInputs = runtimeReport.CachedInputs
 		report.Warnings = append(report.Warnings, runtimeReport.Warnings...)
@@ -476,7 +476,7 @@ func (a app) buildRenderExplainReport(ctx context.Context, input string, flags *
 func explainPreparedJob(ctx context.Context, kind string, j job.Job, report renderExplainReport) (renderExplainReport, error) {
 	prepared, runtimeReport, err := prepareJob(ctx, j)
 	if err != nil {
-		return report, markError(kindRuntime, err)
+		return report, markPrepareError(err)
 	}
 	compiled, err := mvs.Compile(prepared)
 	if err != nil {

@@ -219,6 +219,54 @@ func TestRenderReportFileCarriesRunID(t *testing.T) {
 	}
 }
 
+// Transport failures during runtime preparation were typed kindRuntime before
+// the message was consulted, so a DNS or connection failure — the canonical
+// transient error — reported security_policy and retryable=false, telling
+// callers a policy had blocked a fetch that had simply found the network down.
+func TestTransportFailuresClassifyAsRetryableNetworkErrors(t *testing.T) {
+	transport := []string{
+		`Get "https://example.invalid/m.cif": dial tcp: lookup example.invalid: no such host`,
+		`Get "https://example.com/m.cif": dial tcp 1.2.3.4:443: connect: connection refused`,
+		`Get "https://example.com/m.cif": net/http: TLS handshake timeout`,
+		`Get "https://example.com/m.cif": read tcp: i/o timeout`,
+	}
+	for _, message := range transport {
+		err := markPrepareError(fmt.Errorf("cache input %q: %s", "p", message))
+		if got := agentErrorCode(err); got != "network_blocked" {
+			t.Fatalf("agentErrorCode(%q) = %q, want network_blocked", message, got)
+		}
+		if !errorRetryable(err) {
+			t.Fatalf("transport failure should be retryable: %q", message)
+		}
+		if got := ExitCode(err); got != 7 {
+			t.Fatalf("ExitCode(%q) = %d, want 7", message, got)
+		}
+	}
+
+	// A deliberately disabled network with an empty cache is a configuration
+	// problem: it classifies as network, but retrying can never help.
+	offline := markPrepareError(fmt.Errorf(`runtime offline/network=false and cache miss for input "p" (https://example.com/m.cif)`))
+	if got := agentErrorCode(offline); got != "network_blocked" {
+		t.Fatalf("offline miss agent_code = %q, want network_blocked", got)
+	}
+	if errorRetryable(offline) {
+		t.Fatal("an offline cache miss must not be reported as retryable")
+	}
+
+	// Policy rejections keep their own classification.
+	policy := markPrepareError(markError(kindSecurity, fmt.Errorf(`input "p": host "example.com" is not allowed`)))
+	if got := agentErrorCode(policy); got != kindSecurity {
+		t.Fatalf("allow-host rejection agent_code = %q, want security_policy", got)
+	}
+
+	// Anything preparation-specific that the message cannot identify stays a
+	// runtime block rather than being mislabelled.
+	generic := markPrepareError(fmt.Errorf("some unrecognised preparation failure"))
+	if got := classifyError(generic); got != kindRuntime {
+		t.Fatalf("unclassifiable prepare error = %q, want %q", got, kindRuntime)
+	}
+}
+
 // Runtime warnings raised before scene compilation must survive into the
 // report. render --explain, batch, and inspect each assigned
 // `warnings = compiled.Warnings`, replacing rather than extending the list, so
