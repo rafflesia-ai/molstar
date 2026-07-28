@@ -1,7 +1,7 @@
 {
   "contract": "molstar-logs-verify",
   "stable": {
-    "files_len": 1,
+    "files_len": 3,
     "fully_replayable": true,
     "ok": true,
     "outputs_len": 1,
@@ -13,6 +13,8 @@
       "<string>"
     ],
     "files": [
+      "<string>",
+      "<string>",
       "<string>"
     ],
     "fully_replayable": "<bool>",
@@ -27,10 +29,6 @@
       "includes_inputs": "<bool>",
       "replayable": "<bool>"
     },
-    "replayable": "<bool>",
-    "warnings": [
-      "<string>",
-      "<string>"
-    ]
+    "replayable": "<bool>"
   }
 }

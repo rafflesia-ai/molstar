@@ -162,6 +162,17 @@ func (a app) renderCommand() *cobra.Command {
 
 func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cmd *cobra.Command) (err error) {
 	report := renderReport{OK: true, Input: input, RunLabel: strings.TrimSpace(flags.runLabel)}
+	// Writes the run log at most once and stamps run_log/run_id onto the report,
+	// so every consumer of the report (stdout, --report file, summary) sees them.
+	ensureRunLog := func() {
+		if report.RunLog != "" {
+			return
+		}
+		if path, logErr := maybeWriteRunLogWithOptions("render", report, !flags.noLog, runLogOptionsFromRenderFlags(flags)); logErr == nil {
+			report.RunLog = path
+			report.RunID = runLogIDFromPath(path)
+		}
+	}
 	defer func() {
 		if err == nil {
 			return
@@ -345,6 +356,10 @@ func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cm
 		}
 	}
 	if flags.reportOut != "" {
+		// Write the run log before serializing so the report file carries
+		// run_log/run_id. The documented agent loop reads RUN_ID out of --report
+		// to drive `logs export` and `diagnose`.
+		ensureRunLog()
 		data, err := marshalJSON(report)
 		if err != nil {
 			return markError(kindInternal, err)
@@ -368,20 +383,14 @@ func (a app) runRender(ctx context.Context, input string, flags *renderFlags, cm
 		}
 	}
 	if flags.jsonReport {
-		if path, err := maybeWriteRunLogWithOptions("render", report, !flags.noLog, runLogOptionsFromRenderFlags(flags)); err == nil {
-			report.RunLog = path
-			report.RunID = runLogIDFromPath(path)
-		}
+		ensureRunLog()
 		stdoutReport := report
 		if flags.compact {
 			compactRenderReport(&stdoutReport)
 		}
 		return writeJSON(a.stdout, stdoutReport)
 	}
-	if path, err := maybeWriteRunLogWithOptions("render", report, !flags.noLog, runLogOptionsFromRenderFlags(flags)); err == nil {
-		report.RunLog = path
-		report.RunID = runLogIDFromPath(path)
-	}
+	ensureRunLog()
 	if flags.showReport {
 		return a.writeRenderSummary(report)
 	}

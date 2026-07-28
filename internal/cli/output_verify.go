@@ -212,7 +212,10 @@ func verifyOutput(path string, output job.Output) (outputReport, error) {
 		}
 		report.NonBlank = imageNonBlank(img)
 		if !report.NonBlank {
-			return report, fmt.Errorf("output %s appears blank", path)
+			// A blank image means the scene rendered nothing visible: the renderer
+			// itself worked. Classify it as a scene problem so agents fix selectors
+			// or the camera instead of retrying an identical job or running doctor.
+			return report, markError(kindInvalidScene, fmt.Errorf("output %s appears blank: the scene rendered no visible geometry", output.Path))
 		}
 		report.AverageHash = imageAverageHash(img)
 	}

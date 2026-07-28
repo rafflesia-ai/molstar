@@ -9,7 +9,7 @@ The CLI has two JSON stability levels.
 | `job validate --json` | JSON report | `ok: true` | error envelope | `ok`, `file`, `schema` |
 | `job explain --json` | JSON report | `ok: true` | error envelope | `schema`, `would_compile`, `would_render`, `inputs`, `outputs` |
 | `job normalize --json` | normalized job JSON, unless `--write` sends it to a file | valid job `version` | error envelope | `version`, `inputs`, `scene`, `outputs` |
-| `render --json` | render report | `ok: true` | error envelope | `ok`, `output_files`, `commands`, `diagnostics`, `run_log`, `job`, `mvs_document` |
+| `render --json` | render report | `ok: true` | error envelope | `ok`, `output_files`, `commands`, `diagnostics`, `run_id`, `run_log`, `job`, `mvs_document` |
 | `batch --json` | JSON Lines, one report per job | each line has `ok` | JSON Lines with failed job reports, or error envelope for command setup failures | per-line `ok`, `input`, `output_files`, `attempts`, `error` |
 | `logs list --json` | JSON report | `ok: true` | error envelope | `runs[*].id`, `runs[*].ok`, `runs[*].replayable`, `runs[*].fully_replayable` |
 | `logs show --json` | JSON report | `ok: true` | error envelope | `run.id`, `run.report`, `run.replay` |
@@ -24,6 +24,10 @@ The CLI has two JSON stability levels.
 | `serve --openapi` | OpenAPI document | `openapi` field | error envelope | `openapi`, `paths`, `components`, `x-codeSamples` |
 
 Commands that print artifacts rather than reports, such as `job schema --out file` or `scene compile --out file`, keep stdout quiet when writing to a file unless they explicitly document a JSON report.
+
+`render --report FILE` writes the same report to `FILE` that `--json` writes to stdout, including
+`run_id` and `run_log`, so an agent can drive `logs export`, `logs verify`, and `diagnose` straight
+from the report file.
 
 ## Stable For Agents
 
@@ -62,15 +66,26 @@ Treat these as useful but not stable for branching:
 
 Agents should branch on `error.agent_code`, not message text.
 
-Common values:
+The full set of values:
 
-- `invalid_job`: fix schema, selectors, paths, outputs, or scene data before retrying.
+- `invalid_job`: fix flags, schema, selectors, paths, outputs, or scene data before retrying. Also
+  covers a scene that rendered nothing visible (`code: invalid_scene`) and bad command lines such as
+  an unknown flag or command (`code: invalid_input`).
 - `webgl_unavailable`: renderer exists but cannot create headless WebGL.
-- `renderer_unavailable`: renderer command failed or fallback also failed.
+- `renderer_unavailable`: renderer command failed, the fallback also failed, native modules were
+  built for the wrong Node ABI, or the renderer loaded the scene but export failed.
 - `network_blocked`: cache/offline/network policy prevented a fetch.
 - `security_policy`: allow-path, archive, runtime, or sandbox policy blocked work.
 - `server_busy`: retry later or reduce concurrency.
-- `canceled`: caller or server canceled the job.
+- `canceled`: caller or server canceled the job, or a job timeout elapsed.
+- `internal_error`: unclassified; capture the whole envelope and report it.
+
+The `agent_code` to `code` rollup, expected exit codes, and retryability are tabulated in the
+[README](../README.md) and pinned by `TestErrorCodeMatrix` in `internal/cli`.
+
+A blank render reports `code: invalid_scene` / `agent_code: invalid_job` and is **not** retryable:
+the renderer worked and the scene had nothing visible in it, so rerunning an identical job cannot
+help. Use `molstar inspect JOB --semantic=auto --json` to see what the selectors actually matched.
 
 When `retryable` is false, retry only after changing the job or environment. When `retryable` is true, retry with backoff and include the original JSON envelope in logs.
 

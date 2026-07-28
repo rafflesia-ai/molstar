@@ -1164,9 +1164,13 @@ func readRunBundle(bundle string) (runLogEnvelope, []string, error) {
 	defer reader.Close()
 	var envelope runLogEnvelope
 	files := make([]string, 0, len(reader.File))
+	decoded := false
+	// Enumerate every entry: `files` drives the sidecar checks in
+	// verifyRunBundleReport, so stopping at run.json made verify report bundles
+	// this tool had just written as missing their job.json/scene.mvsj sidecars.
 	for _, file := range reader.File {
 		files = append(files, file.Name)
-		if file.Name != "run.json" {
+		if file.Name != "run.json" || decoded {
 			continue
 		}
 		opened, err := file.Open()
@@ -1181,7 +1185,7 @@ func readRunBundle(bundle string) (runLogEnvelope, []string, error) {
 		if err := json.Unmarshal(data, &envelope); err != nil {
 			return runLogEnvelope{}, files, err
 		}
-		break
+		decoded = true
 	}
 	if envelope.ID == "" {
 		return runLogEnvelope{}, files, fmt.Errorf("bundle is missing run.json")

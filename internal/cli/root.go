@@ -30,6 +30,7 @@ func Execute(ctx context.Context, args []string) error {
 		if errors.As(err, &reported) {
 			return err
 		}
+		err = markUsageError(err)
 		if wantsJSONOnError(args) {
 			_ = a.writeJSONError(commandNameForArgs(root, args), err)
 			return alreadyReported(err)
@@ -47,6 +48,10 @@ func (a app) rootCommand() *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
+	// Inherited by every subcommand: a bad flag is caller input, not an internal fault.
+	cmd.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
+		return markError(kindInvalidInput, err)
+	})
 	cmd.AddCommand(a.renderCommand())
 	cmd.AddCommand(a.agentCommand())
 	cmd.AddCommand(a.quickstartCommand())
@@ -247,6 +252,35 @@ func errorRetryable(err error) bool {
 	}
 }
 
+// usageErrorPrefixes are the messages Cobra produces when the caller typed a bad
+// command line. They are caller-input problems, so they must classify as
+// invalid_input rather than falling through to internal_error.
+var usageErrorPrefixes = []string{
+	"unknown command",
+	"unknown flag",
+	"unknown shorthand flag",
+	"flag needs an argument",
+	"invalid argument",
+	"bad flag syntax",
+}
+
+func markUsageError(err error) error {
+	if err == nil {
+		return nil
+	}
+	var typed kindError
+	if errors.As(err, &typed) {
+		return err
+	}
+	message := strings.ToLower(err.Error())
+	for _, prefix := range usageErrorPrefixes {
+		if strings.HasPrefix(message, prefix) {
+			return markError(kindInvalidInput, err)
+		}
+	}
+	return err
+}
+
 func classifyError(err error) errorKind {
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return kindCanceled
@@ -257,6 +291,10 @@ func classifyError(err error) errorKind {
 	}
 	message := strings.ToLower(err.Error())
 	switch {
+	case strings.Contains(message, "appears blank"):
+		// The renderer ran and produced a well-formed image; the scene just had
+		// nothing visible in it.
+		return kindInvalidScene
 	case strings.Contains(message, "node_module_version") ||
 		strings.Contains(message, "err_dlopen_failed") ||
 		strings.Contains(message, "module did not self-register") ||
@@ -298,6 +336,8 @@ func diagnoseError(err error) []string {
 	message := strings.ToLower(err.Error())
 	var hints []string
 	switch {
+	case strings.Contains(message, "appears blank"):
+		hints = append(hints, "the renderer worked but the scene had nothing visible; check that the component selectors match atoms with `molstar inspect JOB --semantic=auto --json`, and check camera focus/zoom")
 	case strings.Contains(message, "unsupported format"):
 		hints = append(hints, "check the input file extension or pass an explicit format")
 	case strings.Contains(message, "headless webgl context is unavailable") ||
@@ -327,7 +367,14 @@ func diagnoseError(err error) []string {
 		hints = append(hints, "set runtime.cache or pass --cache so remote inputs can be bundled into the MVSX archive")
 	case strings.Contains(message, "portable mvs selectors do not support negation"):
 		hints = append(hints, "replace not: selectors with explicit included selectors such as polymer, ligand, ion, or chain:A")
-	case strings.Contains(message, "render") || strings.Contains(message, "molstar"):
+	case classifyError(err) == kindInvalidInput:
+		hints = append(hints, "check the command flags and input paths; `molstar --help` lists the flags a command accepts, and `molstar job explain JOB --json` resolves a job's inputs and outputs without rendering")
+	case classifyError(err) == kindInvalidScene || classifyError(err) == kindValidation:
+		hints = append(hints, "run `molstar job validate` or `molstar inspect JOB --semantic=auto --json` to see what the scene compiles to")
+	// Deliberately matches "renderer", not bare "render"/"molstar": those appear in
+	// almost every file path this tool touches and produced doctor advice for
+	// unrelated failures such as a missing job file.
+	case strings.Contains(message, "renderer"):
 		hints = append(hints, "run `molstar doctor --json` to verify the renderer dependencies")
 	case strings.Contains(message, "schema") || strings.Contains(message, "validation"):
 		hints = append(hints, "run `molstar job validate` or `molstar job explain` on the job spec")

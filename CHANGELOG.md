@@ -26,6 +26,16 @@
 - The manual release-candidate workflow now runs the same `scripts/release-candidate.sh` entry point documented for local use.
 - Agent JSON contract tests now include compact stable-field assertions in addition to full shape snapshots.
 
+### Fixed
+
+- A blank render is now classified as a scene problem (`code: invalid_scene`, `agent_code: invalid_job`, not retryable) instead of a renderer failure. It previously reported `renderer_unavailable` with `retryable: true` and advised running `doctor`, so `diagnose` said "renderer unavailable" next to "renderer completed" and told agents to re-run an identical job that could never succeed.
+- Bad command lines (unknown command, unknown flag, bad flag value) now report `code: invalid_input` / `agent_code: invalid_job` with exit 2, instead of `internal_error` with exit 1.
+- `render --report FILE` now writes `run_id` and `run_log` into the report file, so the documented agent loop can drive `logs export` and `diagnose` from it. Previously those fields only reached stdout.
+- `logs verify` and `logs rerun` now list every file in a `.molrun` bundle. Bundle reading stopped at `run.json`, so verify reported bundles this tool had just written as missing their `job.json` and `scene.mvsj` sidecars.
+- `inspect` no longer rewrites author-supplied component and structure refs (lowercasing, `-` to `_`). The refs it reported did not exist in the compiled scene, so refs copied out of an inspect report failed when used for `camera.focus`.
+- `inspect` selection stats now report `supported: false` with a `reason` when an input was never parsed, instead of `supported: true` with zero atoms. Any remote bcif input — the default — previously read as "your selector matched nothing".
+- Diagnosis hints no longer suggest running `doctor` for unrelated failures. The catch-all matched bare `render`/`molstar` against the whole message, so any error carrying a path inside a molstar checkout was blamed on the renderer.
+
 ### Notes
 
 - Linux amd64 is the primary renderer release target. macOS and Windows are contract-supported, while full renderer support depends on native Node canvas/GL dependencies.

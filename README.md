@@ -21,19 +21,27 @@ stderr is for progress and diagnostics. Never parse a human-readable string.
 **Failures carry a branchable code.** Errors report `error.code` and `error.agent_code`. Branch on the
 code, never on the message text:
 
-| `agent_code` | What the agent should do |
-| --- | --- |
-| `invalid_input` | Fix flags, file paths, or job shape |
-| `validation_failed` | The job failed schema validation |
-| `invalid_scene` | The job compiled to an invalid MVS scene |
-| `runtime_blocked` | Runtime policy, cache, path, timeout, or resource limit blocked it |
-| `security_policy` | Allowlist, offline, path, or host policy rejected it |
-| `network_error` | Fetch failed, or the offline cache was missing an entry |
-| `renderer_unavailable` | Node, Mol\*, GL, or canvas is missing — run `doctor` |
-| `renderer_abi_mismatch` | Native modules built for the wrong Node ABI — run `update-runtime` |
-| `server_busy` | Queue is full — retry with backoff, or submit async |
-| `render_failed` | Mol\* loaded the scene but rendering or export failed |
-| `canceled` | The request or async job was canceled |
+`agent_code` is the coarse, stable classifier to branch on. `code` is the finer internal
+classifier, useful for logging and for picking a more specific remedy.
+
+| `agent_code` | Rolls up `code` | Exit | Retryable | What the agent should do |
+| --- | --- | --- | --- | --- |
+| `invalid_job` | `invalid_input` | 2 | no | Fix flags, file paths, or job shape |
+| `invalid_job` | `validation_failed` | 3 | no | The job failed schema validation |
+| `invalid_job` | `invalid_scene` | 3 | no | The scene is invalid, or it rendered nothing visible — check selectors and camera |
+| `security_policy` | `runtime_blocked` | 4 | no | Runtime policy, cache, path, timeout, or resource limit blocked it |
+| `security_policy` | `security_policy` | 8 | no | Allowlist, offline, path, or host policy rejected it |
+| `network_blocked` | `network_error` | 7 | yes | Fetch failed, or the offline cache was missing an entry |
+| `renderer_unavailable` | `renderer_unavailable` | 5 | yes | Node, Mol\*, GL, or canvas is missing — run `doctor` |
+| `renderer_unavailable` | `renderer_abi_mismatch` | 5 | yes | Native modules built for the wrong Node ABI — run `update-runtime` |
+| `renderer_unavailable` | `render_failed` | 5 | yes | Mol\* loaded the scene but rendering or export failed |
+| `webgl_unavailable` | `renderer_unavailable` | 5 | yes | The renderer exists but cannot create a headless WebGL context |
+| `server_busy` | `server_busy` | 9 | yes | Queue is full — retry with backoff, or submit async |
+| `canceled` | `canceled` | 130 | no | The request, async job, or job timeout ended the run |
+| `internal_error` | `internal_error` | 1 | no | Unclassified — capture the envelope and report it |
+
+A blank render is a scene problem, not a renderer problem: it reports `invalid_scene` and is not
+retryable, because rerunning the same job cannot fix an empty selection.
 
 **Cost a render before paying for it.** `--dry-run` and `job explain --json` resolve inputs, outputs,
 and renderer commands without touching the renderer, so an agent can validate a plan for free.

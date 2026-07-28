@@ -547,6 +547,13 @@ func errorFromRenderReport(report renderReport) error {
 			continue
 		}
 		err := fmt.Errorf("%s: %s", stage.Name, stage.Error)
+		// Run logs persist stage errors as plain strings, so the original
+		// classification is gone. Prefer what the message itself identifies; the
+		// stage name is only a fallback. Without this a blank-scene failure
+		// recorded under render_output was replayed as a renderer failure.
+		if kind := classifyError(err); kind != kindInternal {
+			return markError(kind, err)
+		}
 		switch stage.Name {
 		case "compile_mvs", "write_temp_mvs":
 			return markError(kindInvalidScene, err)

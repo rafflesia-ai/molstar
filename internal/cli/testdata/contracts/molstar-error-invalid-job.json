@@ -4,7 +4,7 @@
     "agent_code": "invalid_job",
     "code": "invalid_input",
     "command": "job validate",
-    "diagnosis_len": 0,
+    "diagnosis_len": 1,
     "exit_code": 2,
     "has_timestamp": true,
     "ok": false,
@@ -15,7 +15,9 @@
     "error": {
       "agent_code": "<string>",
       "code": "<string>",
-      "diagnosis": [],
+      "diagnosis": [
+        "<string>"
+      ],
       "exit_code": "<number>",
       "message": "<string>",
       "retryable": "<bool>"

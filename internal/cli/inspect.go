@@ -39,6 +39,7 @@ type atomRecord struct {
 
 type selectionStats struct {
 	Supported      bool       `json:"supported"`
+	Reason         string     `json:"reason,omitempty"`
 	Atoms          int        `json:"atoms,omitempty"`
 	Residues       int        `json:"residues,omitempty"`
 	Chains         []string   `json:"chains,omitempty"`
@@ -264,7 +265,12 @@ func jobWithInspectRefs(j job.Job, extraSelector string) job.Job {
 				}
 				component.Ref = uniqueInspectRef(base, seen)
 			} else {
-				component.Ref = uniqueInspectRef(component.Ref, seen)
+				// Keep author-supplied refs verbatim. Sanitizing them here made
+				// inspect report refs (lowercased, "-" -> "_") that do not exist
+				// in the compiled scene, so refs copied out of an inspect report
+				// failed when used for camera.focus or cross-referenced with the
+				// MVS document.
+				seen[component.Ref] = true
 			}
 		}
 		if strings.TrimSpace(extraSelector) != "" {
@@ -293,40 +299,77 @@ func uniqueInspectRef(base string, seen map[string]bool) string {
 	return candidate
 }
 
+// atomAnalysis is the result of trying to read an input's atoms for static
+// selection stats. When Reason is set the input was never parsed, so any
+// selection over it is unknown rather than empty.
+type atomAnalysis struct {
+	records []atomRecord
+	reason  string
+}
+
+func analyzeInputAtoms(input job.Input) atomAnalysis {
+	local := input.LocalPath()
+	if local == "" {
+		return atomAnalysis{reason: "input is not available locally; render once with runtime.cache set, or use --semantic=auto for renderer-computed stats"}
+	}
+	if input.ResolvedFormat() == "bcif" {
+		return atomAnalysis{reason: "binary CIF is not statically parsed; use --semantic=auto for renderer-computed stats"}
+	}
+	records, err := readAtomRecords(local, input.ResolvedFormat())
+	if err != nil {
+		return atomAnalysis{reason: fmt.Sprintf("could not read input: %v", err)}
+	}
+	if len(records) == 0 {
+		return atomAnalysis{reason: "no atom records were parsed from the input; use --semantic=auto for renderer-computed stats"}
+	}
+	return atomAnalysis{records: records}
+}
+
 func inspectComponents(j job.Job, extraSelector string) []map[string]any {
-	statsByInput := map[string][]atomRecord{}
+	statsByInput := map[string]atomAnalysis{}
 	for ref, input := range j.Inputs {
-		if input.LocalPath() == "" {
-			continue
-		}
-		records, err := readAtomRecords(input.LocalPath(), input.ResolvedFormat())
-		if err == nil {
-			statsByInput[ref] = records
-		}
+		statsByInput[ref] = analyzeInputAtoms(input)
 	}
 	var components []map[string]any
 	for _, structure := range j.Scene.Structures {
-		records := statsByInput[structure.Source]
+		analysis, known := statsByInput[structure.Source]
+		if !known {
+			analysis = atomAnalysis{reason: fmt.Sprintf("structure source %q is not a declared input", structure.Source)}
+		}
 		for _, component := range structure.Components {
-			components = append(components, inspectComponent(structure, component, records))
+			components = append(components, inspectComponent(structure, component, analysis))
 		}
 		if extraSelector != "" {
 			component := job.Component{Ref: "query", Select: extraSelector}
-			components = append(components, inspectComponent(structure, component, records))
+			components = append(components, inspectComponent(structure, component, analysis))
 		}
 	}
 	return components
 }
 
-func inspectComponent(structure job.Structure, component job.Component, records []atomRecord) map[string]any {
-	selected, supported := filterAtoms(records, component.Select)
+func inspectComponent(structure job.Structure, component job.Component, analysis atomAnalysis) map[string]any {
+	var stats selectionStats
+	switch {
+	case analysis.reason != "":
+		// The input was never parsed, so we cannot say the selection is empty.
+		// Reporting supported=true with zero atoms here previously read as
+		// "your selector matched nothing".
+		stats = selectionStats{Supported: false, Reason: analysis.reason}
+	default:
+		selected, supported := filterAtoms(analysis.records, component.Select)
+		if !supported {
+			stats = selectionStats{Supported: false, Reason: "selector is not supported by static analysis; use --semantic=auto for renderer-computed stats"}
+		} else {
+			stats = summarizeAtoms(selected, true)
+		}
+	}
 	return map[string]any{
 		"structure":      structure.Ref,
 		"source":         structure.Source,
 		"ref":            component.Ref,
 		"select":         component.Select,
 		"representation": component.Representation,
-		"stats":          summarizeAtoms(selected, supported),
+		"stats":          stats,
 	}
 }
 

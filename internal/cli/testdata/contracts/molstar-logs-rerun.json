@@ -1,7 +1,7 @@
 {
   "contract": "molstar-logs-rerun",
   "stable": {
-    "files_len": 1,
+    "files_len": 3,
     "ok": true,
     "output_files_len": 1,
     "rerun_ok": true
@@ -9,6 +9,8 @@
   "shape": {
     "bundle": "<string>",
     "files": [
+      "<string>",
+      "<string>",
       "<string>"
     ],
     "ok": "<bool>",
