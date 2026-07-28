@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 var staticSelectors = map[string]string{
@@ -155,6 +156,13 @@ func applySelectorSegment(expression map[string]any, segment string) error {
 	value := strings.TrimSpace(parts[1])
 	if value == "" {
 		return fmt.Errorf("selector segment %q has an empty value", segment)
+	}
+	// mmCIF identifiers never contain whitespace, so an embedded space means the
+	// caller wrote something the DSL does not support. Without this check
+	// "chain:A and residue:5" was accepted as label_asym_id "A and residue",
+	// which silently matches nothing instead of reporting a bad selector.
+	if strings.ContainsFunc(value, unicode.IsSpace) {
+		return fmt.Errorf("selector segment %q has whitespace in its value; the selector DSL has no boolean operators, so combine restrictions with %q, as in %q", segment, "/", "chain:A/residue:5")
 	}
 	switch key {
 	case "chain", "label-chain", "label_chain", "label_asym_id":

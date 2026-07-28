@@ -252,6 +252,56 @@ func TestCompileRejectsUnsupportedSelectorNegation(t *testing.T) {
 	}
 }
 
+// The DSL has no boolean operators, but "chain:A and residue:5" used to parse
+// as label_asym_id "A and residue": a selector that matches nothing, reported as
+// valid by `selectors explain`.
+func TestCompileRejectsWhitespaceInSelectorValues(t *testing.T) {
+	for _, selector := range []string{
+		"chain:A and residue:5",
+		"chain:A B C",
+		"ligand:RET or HEM",
+		"chain:A/residue:5 and atom:CA",
+	} {
+		if _, _, _, err := compileSelector(selector); err == nil {
+			t.Fatalf("selector %q should be rejected, not silently compiled", selector)
+		}
+	}
+
+	// Surrounding whitespace is still trimmed, and valid selectors keep working.
+	for _, selector := range []string{
+		" chain:A ",
+		"chain:A/residue:10-20",
+		"ligand:RET",
+		"within:5A:ligand:RTL",
+		"polymer",
+	} {
+		if _, _, _, err := compileSelector(selector); err != nil {
+			t.Fatalf("selector %q should compile, got %v", selector, err)
+		}
+	}
+}
+
+// pLDDT must use Mol*'s AlphaFold palette (orange = very low confidence, dark
+// blue = very high). It previously mapped to `uncertainty`, which colors high
+// values red and so inverted every AlphaFold confidence render: folded domains
+// came out red and disordered loops blue.
+func TestPLDDTUsesTheAlphaFoldConfidenceTheme(t *testing.T) {
+	for _, requested := range []string{"plddt", "pLDDT", "confidence", "model-confidence", "model_confidence"} {
+		theme, ok := molstarColorTheme(requested)
+		if !ok {
+			t.Fatalf("color %q should map to a Mol* theme", requested)
+		}
+		if theme != "plddt-confidence" {
+			t.Fatalf("color %q mapped to %q, want plddt-confidence", requested, theme)
+		}
+	}
+
+	// `uncertainty` stays available as its own distinct request.
+	if theme, ok := molstarColorTheme("uncertainty"); !ok || theme != "uncertainty" {
+		t.Fatalf("uncertainty mapped to %q (ok=%v), want uncertainty", theme, ok)
+	}
+}
+
 func TestIsDocumentBytes(t *testing.T) {
 	data := []byte(`{"metadata":{"version":"1"},"root":{"kind":"root"}}`)
 	if !IsDocumentBytes(data) {

@@ -10,7 +10,7 @@ The CLI has two JSON stability levels.
 | `job explain --json` | JSON report | `ok: true` | error envelope | `schema`, `would_compile`, `would_render`, `inputs`, `outputs` |
 | `job normalize --json` | normalized job JSON, unless `--write` sends it to a file | valid job `version` | error envelope | `version`, `inputs`, `scene`, `outputs` |
 | `render --json` | render report | `ok: true` | error envelope | `ok`, `output_files`, `commands`, `diagnostics`, `run_id`, `run_log`, `job`, `mvs_document` |
-| `batch --json` | JSON Lines, one report per job | each line has `ok` | JSON Lines with failed job reports, or error envelope for command setup failures | per-line `ok`, `input`, `output_files`, `attempts`, `error` |
+| `batch --json` | JSON Lines: one report per job, then one summary line | each line has `ok` | JSON Lines with failed job reports, or error envelope for command setup failures | per-job `ok`, `id`, `index`, `output_files`, `attempts`, `error`; summary `summary`, `total`, `succeeded`, `failed`, `skipped` |
 | `logs list --json` | JSON report | `ok: true` | error envelope | `runs[*].id`, `runs[*].ok`, `runs[*].replayable`, `runs[*].fully_replayable` |
 | `logs show --json` | JSON report | `ok: true` | error envelope | `run.id`, `run.report`, `run.replay` |
 | `logs verify --json` | JSON report | `ok: true` | error envelope; with `--strict`, non-replayable bundles also exit non-zero after writing the report | `bundle`, `id`, `replayable`, `fully_replayable`, `replay`, `expected_outputs` |
@@ -28,6 +28,10 @@ Commands that print artifacts rather than reports, such as `job schema --out fil
 `render --report FILE` writes the same report to `FILE` that `--json` writes to stdout, including
 `run_id` and `run_log`, so an agent can drive `logs export`, `logs verify`, and `diagnose` straight
 from the report file.
+
+`batch --json` ends its JSON Lines stream with a summary object carrying `summary: true`. Batch jobs
+are inline job objects, so per-job lines identify themselves with `id` and `index`, not with an input
+path. Skip the summary line, or branch on it, before treating a line as a render report.
 
 ## Stable For Agents
 

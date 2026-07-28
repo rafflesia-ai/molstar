@@ -395,7 +395,12 @@ func molstarColorTheme(value string) (string, bool) {
 		return "entity-id", true
 	case "element", "element-symbol", "element_symbol":
 		return "element-symbol", true
-	case "plddt", "confidence", "model-confidence", "model_confidence", "uncertainty":
+	// pLDDT uses the AlphaFold palette (orange = very low, dark blue = very
+	// high). The `uncertainty` theme is a different thing: it colors high values
+	// red, so pointing plddt at it inverted every AlphaFold confidence render.
+	case "plddt", "confidence", "model-confidence", "model_confidence":
+		return "plddt-confidence", true
+	case "uncertainty":
 		return "uncertainty", true
 	default:
 		return "", false

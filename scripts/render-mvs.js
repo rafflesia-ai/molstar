@@ -146,6 +146,9 @@ const { setFSModule } = require('molstar/lib/commonjs/mol-util/data-source.js');
 const { onelinerJsonString } = require('molstar/lib/commonjs/mol-util/json.js');
 const { ParamDefinition } = require('molstar/lib/commonjs/mol-util/param-definition.js');
 const { Mp4Export } = require('molstar/lib/commonjs/extensions/mp4-export/index.js');
+// Provides the `plddt-confidence` color theme and the pLDDT/QMEAN model
+// properties that AlphaFold and ModelArchive structures carry.
+const { MAQualityAssessment } = require('molstar/lib/commonjs/extensions/model-archive/quality-assessment/behavior.js');
 const { MolViewSpec } = require('molstar/lib/commonjs/extensions/mvs/behavior.js');
 const { loadMVSX } = require('molstar/lib/commonjs/extensions/mvs/components/formats.js');
 const { loadMVS } = require('molstar/lib/commonjs/extensions/mvs/load.js');
@@ -304,6 +307,7 @@ async function createPlugin(size) {
   const spec = DefaultPluginSpec();
   spec.behaviors.push(PluginSpec.Behavior(MolViewSpec));
   spec.behaviors.push(PluginSpec.Behavior(Mp4Export));
+  spec.behaviors.push(PluginSpec.Behavior(MAQualityAssessment));
   const headlessCanvasOptions = defaultCanvas3DParams();
   const canvasOptions = {
     ...ParamDefinition.getDefaultValues(Canvas3DParams),

@@ -28,6 +28,8 @@
 
 ### Fixed
 
+- `color: plddt` now renders with Mol\*'s AlphaFold `plddt-confidence` palette (orange = very low confidence, dark blue = very high). It mapped to the `uncertainty` theme, which colors high values red — AlphaFold stores pLDDT in the B-factor field, so every confidence render came out inverted, with folded domains red and disordered loops blue. The renderer now registers the model-archive quality-assessment behavior that provides the theme. `color: uncertainty` still selects the `uncertainty` theme.
+- Selector values with embedded whitespace are rejected instead of silently compiled. The DSL has no boolean operators, so `chain:A and residue:5` parsed as `label_asym_id` `"A and residue"` — a selector that matches nothing, which `selectors explain` reported as valid.
 - A blank render is now classified as a scene problem (`code: invalid_scene`, `agent_code: invalid_job`, not retryable) instead of a renderer failure. It previously reported `renderer_unavailable` with `retryable: true` and advised running `doctor`, so `diagnose` said "renderer unavailable" next to "renderer completed" and told agents to re-run an identical job that could never succeed.
 - Bad command lines (unknown command, unknown flag, bad flag value) now report `code: invalid_input` / `agent_code: invalid_job` with exit 2, instead of `internal_error` with exit 1.
 - `render --report FILE` now writes `run_id` and `run_log` into the report file, so the documented agent loop can drive `logs export` and `diagnose` from it. Previously those fields only reached stdout.
